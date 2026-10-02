@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.log
+*.tmp
+.mypy_cache/
+.pytest_cache/
+monitoring/data/
+monitoring/grafana-data/
+labs/wheels/*.whl
+.env
+secrets/
+*.key
+*.pem

@@ -1,0 +1,82 @@
+{
+ "1": {
+  "task": "Функция pct(used, total) → процент с одним знаком ('42.3') и is_over(value, limit) → True/False. Применить к free -m: посчитать процент занятой памяти.",
+  "expect": "pct(1500, 3900) → '38.5';  is_over(38.5, 90) → False",
+  "solution": "def pct(used, total):\n    return str(round(used * 100.0 / total, 1))\n\n\ndef is_over(value, limit):\n    return float(value) > float(limit)\n\n\nprint(pct(1500, 3900), is_over(38.5, 90))"
+ },
+ "2": {
+  "task": "Функция top_messages(lines, n=3) → список кортежей (сообщение, сколько раз). Использовать Counter.",
+  "expect": "top_messages(['a','b','a']) → [('a', 2), ('b', 1)]",
+  "solution": "from collections import Counter\n\n\ndef top_messages(lines, n=3):\n    return Counter(lines).most_common(n)\n\n\nprint(top_messages(['a', 'b', 'a']))"
+ },
+ "3": {
+  "task": "Функция timed(url) → (код ответа, миллисекунды) через urllib с таймаутом 5 секунд. Ошибку возвращать как (None, -1).",
+  "expect": "timed('https://example.org') → (200, 137)",
+  "solution": "import time\nimport urllib.request\n\n\ndef timed(url):\n    start = time.time()\n    try:\n        with urllib.request.urlopen(url, timeout=5) as r:\n            return r.status, int((time.time() - start) * 1000)\n    except Exception:\n        return None, -1\n\n\nprint(timed('https://example.org'))"
+ },
+ "4": {
+  "task": "Функции image_tag(version, name='app') → 'app:1.2.3' и is_semver(s) → True/False по шаблону X.Y.Z.",
+  "expect": "image_tag('1.2.3') → 'app:1.2.3';  is_semver('1.2') → False",
+  "solution": "import re\n\n\ndef image_tag(version, name='app'):\n    return '%s:%s' % (name, version)\n\n\ndef is_semver(s):\n    return bool(re.match(r'^\\d+\\.\\d+\\.\\d+$', s))\n\n\nprint(image_tag('1.2.3'), is_semver('1.2'))"
+ },
+ "5": {
+  "task": "Функция manifest_kind(text) → кортеж (kind, name) из простого YAML-манифеста (строки 'kind: Deployment', '  name: app').",
+  "expect": "manifest_kind('kind: Deployment\\n  name: app') → ('Deployment', 'app')",
+  "solution": "import re\n\n\ndef manifest_kind(text):\n    kind = re.search(r'^kind:\\s*(\\S+)', text, re.M)\n    name = re.search(r'^\\s+name:\\s*(\\S+)', text, re.M)\n    return (kind.group(1) if kind else None, name.group(1) if name else None)\n\n\nprint(manifest_kind('kind: Deployment\\n  name: app'))"
+ },
+ "6": {
+  "task": "Функция parse_env(text) → словарь KEY=VALUE из строк, игнорируя пустые строки и комментарии с #.",
+  "expect": "parse_env('A=1\\n# ком\\nB=2') → {'A': '1', 'B': '2'}",
+  "solution": "def parse_env(text):\n    out = {}\n    for line in text.splitlines():\n        line = line.strip()\n        if not line or line.startswith('#'):\n            continue\n        if '=' in line:\n            k, v = line.split('=', 1)\n            out[k] = v\n    return out\n\n\nprint(parse_env('A=1\\n# ком\\nB=2'))"
+ },
+ "7": {
+  "task": "Функции parse_size('10Gi') → байты (Gi=1024**3, Mi=1024**2) и fmt_size(байты) → '10Gi'.",
+  "expect": "parse_size('10Gi') → 10737418240;  fmt_size(10737418240) → '10Gi'",
+  "solution": "UNITS = {'Ki': 1024, 'Mi': 1024 ** 2, 'Gi': 1024 ** 3}\n\n\ndef parse_size(text):\n    for unit, mult in UNITS.items():\n        if text.endswith(unit):\n            return int(float(text[:-len(unit)]) * mult)\n    return int(text)\n\n\ndef fmt_size(num):\n    for unit, mult in sorted(UNITS.items(), key=lambda x: -x[1]):\n        if num >= mult and num % mult == 0:\n            return '%d%s' % (num // mult, unit)\n    return str(num)\n\n\nprint(parse_size('10Gi'), fmt_size(10737418240))"
+ },
+ "8": {
+  "task": "Функция pipeline(stages) → список пройденных стадий и остановка на первой False; вернуть (ok, пройдено, упавшая).",
+  "expect": "pipeline([('lint', True), ('test', False), ('build', True)]) → (False, ['lint'], 'test')",
+  "solution": "def pipeline(stages):\n    passed = []\n    for name, ok in stages:\n        if not ok:\n            return False, passed, name\n        passed.append(name)\n    return True, passed, None\n\n\nprint(pipeline([('lint', True), ('test', False), ('build', True)]))"
+ },
+ "9": {
+  "task": "Функция percentile(values, q) → q-й перцентиль (метод 'ближайшего ранга'). Применить к временам ответа.",
+  "expect": "percentile([10, 20, 30, 40, 100], 95) → 100;  percentile([10, 20], 50) → 10",
+  "solution": "import math\n\n\ndef percentile(values, q):\n    if not values:\n        return None\n    data = sorted(values)\n    k = int(math.ceil(q / 100.0 * len(data))) - 1\n    return data[max(0, k)]\n\n\nprint(percentile([10, 20, 30, 40, 100], 95), percentile([10, 20], 50))"
+ },
+ "10": {
+  "task": "Функция alert_state(value, threshold, since_ts, now_ts, window=120) → 'firing', 'pending' или 'ok' (антидребезг: условие держится дольше окна).",
+  "expect": "alert_state(95, 90, 1000, 1100) → 'pending';  alert_state(95, 90, 1000, 1130) → 'firing';  alert_state(80, 90, 1000, 1130) → 'ok'",
+  "solution": "def alert_state(value, threshold, since_ts, now_ts, window=120):\n    if value <= threshold:\n        return 'ok'\n    return 'firing' if now_ts - since_ts >= window else 'pending'\n\n\nprint(alert_state(95, 90, 1000, 1100), alert_state(95, 90, 1000, 1130), alert_state(80, 90, 1000, 1130))"
+ },
+ "11": {
+  "task": "Функция inventory_ini(hosts) → текст ini-инвентаря для Ansible: группа [web] и строки 'имя ansible_host=ip'.",
+  "expect": "inventory_ini({'web': [{'name': 'vm1', 'ip': '10.0.0.1'}]}) содержит '[web]' и 'vm1 ansible_host=10.0.0.1'",
+  "solution": "def inventory_ini(hosts):\n    lines = []\n    for group, items in hosts.items():\n        lines.append('[%s]' % group)\n        for h in items:\n            lines.append('%s ansible_host=%s' % (h['name'], h['ip']))\n        lines.append('')\n    return '\\n'.join(lines)\n\n\nprint(inventory_ini({'web': [{'name': 'vm1', 'ip': '10.0.0.1'}]}))"
+ },
+ "12": {
+  "task": "Функции backup_name(dt) → 'db-2026-10-14.sql.gz' из datetime и check_restore(expected, actual) → 'ok' или 'lost N rows'.",
+  "expect": "backup_name(datetime(2026, 10, 14)) → 'db-2026-10-14.sql.gz';  check_restore(100, 97) → 'lost 3 rows'",
+  "solution": "from datetime import datetime\n\n\ndef backup_name(dt):\n    return 'db-%s.sql.gz' % dt.strftime('%Y-%m-%d')\n\n\ndef check_restore(expected, actual):\n    if expected == actual:\n        return 'ok'\n    return 'lost %d rows' % (expected - actual)\n\n\nprint(backup_name(datetime(2026, 10, 14)), check_restore(100, 97))"
+ },
+ "13": {
+  "task": "Функция extra_ports(opened, allowed) → отсортированный список лишних открытых портов.",
+  "expect": "extra_ports([22, 80, 5432, 9001], [22, 80, 443]) → [5432, 9001]",
+  "solution": "def extra_ports(opened, allowed):\n    return sorted(set(opened) - set(allowed))\n\n\nprint(extra_ports([22, 80, 5432, 9001], [22, 80, 443]))"
+ },
+ "14": {
+  "task": "Функция timeline(events) → markdown-строки 'HH:MM — событие', отсортированные по времени. events — список (iso_время, текст).",
+  "expect": "timeline([('2026-10-16T10:05:00', 'рост ошибок'), ('2026-10-16T10:01:00', 'деплой')]) → первая строка '10:01 — деплой'",
+  "solution": "def timeline(events):\n    rows = sorted(events, key=lambda e: e[0])\n    return '\\n'.join('- %s — %s' % (e[0][11:16], e[1]) for e in rows)\n\n\nprint(timeline([('2026-10-16T10:05:00', 'рост ошибок'), ('2026-10-16T10:01:00', 'деплой')]))"
+ },
+ "15": {
+  "task": "Функция cost_month(vcpu, ram_gb, disk_gb, price) → стоимость в месяц с округлением до копеек. price — словарь цен за единицу.",
+  "expect": "cost_month(2, 4, 15, {'vcpu': 300, 'ram_gb': 150, 'disk_gb': 10}) → '3750.00'",
+  "solution": "from decimal import Decimal, ROUND_HALF_UP\n\n\ndef cost_month(vcpu, ram_gb, disk_gb, price):\n    total = (vcpu * price.get('vcpu', 0) + ram_gb * price.get('ram_gb', 0)\n             + disk_gb * price.get('disk_gb', 0))\n    d = Decimal(str(total)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)\n    return str(d)\n\n\nprint(cost_month(2, 4, 15, {'vcpu': 300, 'ram_gb': 150, 'disk_gb': 10}))"
+ },
+ "16": {
+  "task": "Функция summary(checks) → markdown-таблица 'проверка | результат' из словаря, с ✅/❌ по булеву значению.",
+  "expect": "summary({'тесты': True, 'метрики': False}) содержит '| тесты | ✅ |'",
+  "solution": "def summary(checks):\n    lines = ['| проверка | результат |', '| --- | --- |']\n    for name, ok in checks.items():\n        lines.append('| %s | %s |' % (name, '✅' if ok else '❌'))\n    return '\\n'.join(lines)\n\n\nprint(summary({'тесты': True, 'метрики': False}))"
+ }
+}

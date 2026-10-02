@@ -1,0 +1,12 @@
+{
+ "current_day": 1,
+ "streak": 20,
+ "best_streak": 20,
+ "last_credited": "2026-10-02",
+ "history": [
+  {"date": "2026-10-02", "day": 17, "status": "mini"}
+ ],
+ "mini_count": 3,
+ "started": "2026-10-03",
+ "intro_pending": false
+}
