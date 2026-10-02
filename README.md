@@ -45,6 +45,8 @@
 
 * k3s установлен и здоров: узел `vm-hermes` Ready (control-plane, v1.36.5+k3s1), трафик/ingress — traefik,
   есть metrics-server и local-path-provisioner. Занимает ~640 МБ RAM и ~300 МБ диска.
+* Сквозной сценарий дней 5–7 проверен тренером 02.10: деплой `nginx:alpine` в 2 реплики + `NodePort`-сервис
+  → 2/2 Running, снаружи `HTTP 200` за 0,4 мс (NodePort 31896). Образ `-alpine` скачался с первой попытки.
 * Порт 80 занят traefik (svclb) — для лаборатории nginx брать 8080/8443 или отключать traefik.
 * Файрвол: для k3s в nftables добавлен форвардинг и вход с `cni0`/`flannel.1`/`veth*` — без правил
   в цепочке `input` поды не видят API-сервер (симптом: CoreDNS 0/1, metrics-server CrashLoopBackOff).
