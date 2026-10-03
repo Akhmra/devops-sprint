@@ -66,11 +66,11 @@ def collect(path: str = "/") -> dict:
         "disk_used_pct": disk_used_pct(path),
     }
 
-    def pct(used, total):
-        return f"{used / total * 100:.1f}"        # '38.5' — строка с одним знаком
+def pct(used, total):
+    return f"{used / total * 100:.1f}"        # '38.5' — строка с одним знаком
 
-    def is_over(value, limit):
-        return value > limit                       # True/False
+def is_over(value, limit):
+    return value > limit                       # True/False
 
 
 def main() -> int:
@@ -87,13 +87,13 @@ def main() -> int:
     # ── предупреждения ───────────────────────────────────────────────────────
     warnings: list[str] = []
 
-    if m["cpu_load_pct"] > args.threshold:
+    if is_over(m["cpu_load_pct"], args.threshold):
         warnings.append(f"загрузка CPU {m['cpu_load_pct']}% > {args.threshold}%")
 
-    if m["mem_used_pct"] > args.threshold:
+    if is_over(m["mem_used_pct"], args.threshold):
         warnings.append(f"память {m['mem_used_pct']}% > {args.threshold}%")
 
-    if m["disk_used_pct"] > args.threshold:
+    if is_over(m["disk_used_pct"], args.threshold):
         warnings.append(f"диск {m['disk_used_pct']}% > {args.threshold}%")
 
     ok = len(warnings) == 0
@@ -119,11 +119,9 @@ def main() -> int:
         if warnings:
             for w in warnings:
                 print(f"ВНИМАНИЕ: {w}")
-            print("статус: ПРЕВЫШЕНИЕ ПОРГА")   # сохраняем опечатку из задания
+            print("статус: ПРЕВЫШЕНИЕ ПОРОГА")  
         else:
             print("статус: OK")
-
-        print(f"код выхода: {0 if ok else 1}")
 
     return 0 if ok else 1
 
