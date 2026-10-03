@@ -23,17 +23,32 @@ EXTNUM=$(sudo sfdisk --dump "/dev/$DISK" 2>/dev/null | awk '/type=5|type=f|type=
 EXTNUM=${EXTNUM##*[!0-9]}
 echo "Диск /dev/$DISK: PV $PV (раздел $NUM), расширенный раздел: ${EXTNUM:-нет}"
 
-# заставляем ядро перечитать размер диска (если увеличен на ходу, без перезагрузки)
-echo 1 | sudo tee "/sys/block/$DISK/device/rescan" >/dev/null 2>&1 || true
-# защита: если диск в системе не вырос, ничего не делаем
-DISKSZ=$(sudo lsblk -bdno SIZE "/dev/$DISK")
-PVSZ=$(sudo /sbin/blockdev --getsize64 "$PV" 2>/dev/null || echo 0)
-if [ -z "$FORCE" ] && [ $((DISKSZ - PVSZ)) -lt $((1024 * 1024 * 1024)) ]; then
-    echo "ВНИМАНИЕ: диск в системе не вырос ($((DISKSZ/1024/1024/1024)) ГБ) — в панели Cloud.ru он ещё не увеличен"
-    echo "(или ВМ не перезагружена). Сначала увеличь диск, потом запускай этот скрипт."
-    echo "Продолжить всё равно: FORCE=1 bash RESIZE-VM.sh"
-    exit 1
+# пытаемся заставить ядро перечитать размер диска. У virtio-blk файла rescan НЕТ (это атрибут SCSI),
+# но в этом ядре драйвер умеет перечитывать ёмкость по событию от гипервизора (virtblk_update_capacity),
+# поэтому чаще всего новый размер уже виден: проверь lsblk -bdno SIZE. Если нет — полный power-off/on ВМ.
+if [ -e "/sys/block/$DISK/device/rescan" ]; then
+    echo 1 | sudo tee "/sys/block/$DISK/device/rescan" >/dev/null 2>&1 || true
+else
+    echo "Примечание: /sys/block/$DISK/device/rescan недоступен (virtio-blk, а не SCSI). Драйвер может"
+    echo "подхватить новый размер сам; если lsblk -bdno SIZE /dev/$DISK всё ещё показывает $(( $(sudo lsblk -bdno SIZE /dev/$DISK) / 1024/1024/1024 )) ГБ — нужен Выключить -> Включить ВМ."
 fi
+
+# Сколько места в конце диска НЕ занято разделами — считать через start+size!
+# ВАЖНО: раздел vda5 начинается со смещения 1001472 сектора (~513 МБ), поэтому «размер диска минус
+# размер раздела» врёт: даёт ложные 489 МБ свободного там, где хвост диска уже нулевой.
+STARTSEC=$(cat "/sys/block/$DISK/$PART/start")
+SIZESEC=$(cat "/sys/block/$DISK/$PART/size")
+DISKSEC=$(( $(sudo lsblk -bdno SIZE "/dev/$DISK") / 512 ))
+FREESEC=$(( DISKSEC - STARTSEC - SIZESEC ))
+DISKSZ=$(( DISKSEC * 512 ))
+if [ $((FREESEC * 512)) -lt $((1024 * 1024)) ]; then
+    echo "Расти нечего: диск $((DISKSZ/1024/1024/1024)) ГБ полностью разложен по разделам (хвост $((FREESEC * 512)) байт)."
+    echo "Если в панели ты только что заказал диск побольше — до ОС новый размер не дошёл. Проверь:"
+    echo "  Инфраструктура -> Виртуальные машины -> ВМ -> вкладка «Диски» -> системный диск -> Размер,"
+    echo "  затем Выключить -> Включить ВМ (рост на ходу драйвер замечает не всегда) и запусти этот скрипт снова."
+    exit 0
+fi
+echo "В конце диска не занято $((FREESEC * 512 / 1024 / 1024)) МБ — есть что растягивать."
 
 # 1. расширенный раздел до конца диска, затем логический с LVM
 [ -n "$EXTNUM" ] && sudo growpart "/dev/$DISK" "$EXTNUM" || true   # NOCHANGE — это не ошибка
