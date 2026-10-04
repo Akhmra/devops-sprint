@@ -58,6 +58,22 @@ def extra_done_today(day):
     return datetime.fromtimestamp(os.path.getmtime(p)).date().isoformat() == today_str()
 
 
+def today_entry(st):
+    """Запись истории за сегодня (или None, если день ещё не зачтён)."""
+    for h in reversed(st.get("history") or []):
+        if h.get("date") == today_str():
+            return h
+    return None
+
+
+def extra_of_day(plan, day):
+    """Задание расширения для конкретного дня плана."""
+    for d in plan.get("days", []):
+        if int(d.get("day", 0)) == int(day or 0):
+            return d.get("extra")
+    return None
+
+
 def extra_week_count(st):
     """Сколько дней за последнюю неделю закрыто с блоком расширения."""
     done = st.get("extra_done") or []
@@ -324,16 +340,20 @@ def _check_body(plan, st):
 def check(plan, st):
     """Проверка дня + статус блока расширения."""
     body = _check_body(plan, st)
-    d = day_entry(plan, st.get("current_day", 1))
-    extra = (d or {}).get("extra")
-    if extra:
-        mins = plan.get("minutes_split", {}).get("extra", 60)
-        if extra_done_today(d.get("day")):
-            week = extra_note(st)
-            body += "\n\n🔵 Расширение (%d мин) закрыто ✅ (файл в labs/ за сегодня). За 7 дней: %d" % (mins, week)
-        else:
-            body += ("\n\n🔵 Расширение (%d мин) ещё не закрыто.\n   Задача: %s\n   Критерий: %s"
-                     % (mins, extra.get("task", ""), extra.get("crit", "")))
+    ent = today_entry(st)
+    if not ent or ent.get("status") != "done":
+        return body                      # ядро дня ещё не закрыто — про расширение не напоминаем
+    day_no = ent.get("day")
+    extra = extra_of_day(plan, day_no)
+    if not extra:
+        return body
+    mins = plan.get("minutes_split", {}).get("extra", 60)
+    if extra_done_today(day_no):
+        week = extra_note(st)
+        body += "\n\n🔵 Расширение дня %s (%d мин) закрыто ✅. За 7 дней: %d" % (day_no, mins, week)
+    else:
+        body += ("\n\n🔵 Расширение дня %s (%d мин) ещё не закрыто.\n   Задача: %s\n   Критерий: %s"
+                 % (day_no, mins, extra.get("task", ""), extra.get("crit", "")))
     return body
 
 
@@ -441,17 +461,21 @@ def main():
             print("--- ЭТАЛОН (сверять ПОСЛЕ своей попытки) ---")
             print(dr.get("solution", ""))
     elif mode == "extra":
-        d = day_entry(plan, st.get("current_day", 1)) or {}
-        ex = d.get("extra")
-        if not ex:
-            pass                      # расширения на сегодня нет — молчим
-        elif extra_done_today(d.get("day")):
-            extra_note(st)            # уже сделано — тоже молчим (watchdog)
+        ent = today_entry(st)
+        if not ent or ent.get("status") != "done":
+            pass                      # ядро дня не закрыто → о расширении молчим (watchdog)
         else:
-            mins = plan.get("minutes_split", {}).get("extra", 60)
-            print("🔵 Блок расширения (%d мин) ещё не закрыт.\nЗадача: %s\nКритерий: %s\n"
-                  "Как закрыть: сделать лабу и записать результат в labs/ (любой файл с датой сегодня)."
-                  % (mins, ex.get("task", ""), ex.get("crit", "")))
+            day_no = ent.get("day")
+            ex = extra_of_day(plan, day_no)
+            if not ex:
+                pass                  # у дня нет расширения
+            elif extra_done_today(day_no):
+                extra_note(st)        # расширение уже закрыто — молчим (watchdog)
+            else:
+                mins = plan.get("minutes_split", {}).get("extra", 60)
+                print("🔵 Ядро дня %s закрыто, остался блок расширения (%d мин).\nЗадача: %s\n"
+                      "Критерий: %s\nФайл с результатом — labs/day%02d.md" % (day_no, mins,
+                      ex.get("task", ""), ex.get("crit", ""), int(day_no)))
     elif mode == "status":
         print(status(plan, st))
     elif mode == "weekly":
