@@ -1,10 +1,24 @@
 {
- "current_day": 1,
- "streak": 20,
- "best_streak": 20,
- "last_credited": "2026-10-02",
+ "current_day": 3,
+ "streak": 22,
+ "best_streak": 22,
+ "last_credited": "2026-10-04",
  "history": [
-  {"date": "2026-10-02", "day": 17, "status": "mini"}
+  {
+   "date": "2026-10-02",
+   "day": 17,
+   "status": "mini"
+  },
+  {
+   "date": "2026-10-03",
+   "day": 1,
+   "status": "done"
+  },
+  {
+   "date": "2026-10-04",
+   "day": 2,
+   "status": "done"
+  }
  ],
  "mini_count": 3,
  "started": "2026-10-03",
