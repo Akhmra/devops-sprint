@@ -1,0 +1,10 @@
+# devcheck.service
+[Unit]
+Description=devcheck — инвентарь сервера (CPU, RAM, диск)
+
+[Service]
+Type=oneshot
+User=rafael
+ExecStart=/usr/bin/python3 /home/rafael/devops-sprint/tools/devcheck.py --json
+StandardOutput=append:/var/log/devcheck.log
+StandardError=journal

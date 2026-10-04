@@ -1,0 +1,11 @@
+# devcheck.timer
+[Unit]
+Description=Запуск devcheck раз в час
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+RandomizedDelaySec=120
+
+[Install]
+WantedBy=timers.target
