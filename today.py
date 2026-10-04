@@ -44,6 +44,38 @@ def load_drill(day):
     return d.get(str(day)) or {}
 
 
+def labs_dir():
+    return os.path.join(REPO, "labs")
+
+
+def extra_done_today(day):
+    """Расширение дня сделано, если labs/dayNN.md обновлён сегодня."""
+    if not day:
+        return False
+    p = os.path.join(labs_dir(), "day%02d.md" % int(day))
+    if not os.path.isfile(p):
+        return False
+    return datetime.fromtimestamp(os.path.getmtime(p)).date().isoformat() == today_str()
+
+
+def extra_week_count(st):
+    """Сколько дней за последнюю неделю закрыто с блоком расширения."""
+    done = st.get("extra_done") or []
+    week_ago = (date.today() - timedelta(days=7)).isoformat()
+    return len([x for x in done if x >= week_ago])
+
+
+def extra_note(st):
+    """Отметить расширение в state (один раз в день)."""
+    t = today_str()
+    done = st.setdefault("extra_done", [])
+    if t not in done:
+        done.append(t)
+        st["extra_done"] = done[-40:]
+        save_state(st)
+    return extra_week_count(st)
+
+
 def load_state():
     st = _load("state.json", None)
     if st is None:
@@ -185,8 +217,9 @@ def brief(plan, st):
     py, inf = d.get("python", {}), d.get("infra", {})
     lines = [
         header(plan, st, d), "",
-        "⏱ Сегодня %d минут: %d Python + %d инфраструктура + %d конспект" % (
-            plan.get("minutes_total", 60), sp.get("python", 25), sp.get("infra", 25), sp.get("notes", 10)), "",
+        "⏱ Сегодня %d минут: %d Python + %d инфраструктура + %d конспект%s" % (
+            plan.get("minutes_total", 60), sp.get("python", 25), sp.get("infra", 25), sp.get("notes", 10),
+            (" + %d блок расширения" % sp.get("extra", 60)) if d.get("extra") else ""), "",
         "🐍 PYTHON (%d мин) — %s" % (sp.get("python", 25), py.get("topic", "—")),
         "   📚 %s" % py.get("source", ""),
         "   • теория: %s" % py.get("theory", ""),
@@ -203,6 +236,11 @@ def brief(plan, st):
         "   • %s" % d.get("question", ""), "",
         "✅ ГОТОВО, ЕСЛИ: %s" % d.get("done_criteria", ""),
     ]
+    if d.get("extra"):
+        lines += ["", "🔵 БЛОК РАСШИРЕНИЯ (%d мин, только практика — не теория) — %s" % (
+                      plan.get("minutes_split", {}).get("extra", 60), d["extra"].get("task", "")),
+                  "   • критерий: %s" % d["extra"].get("crit", ""),
+                  "   • проверка: python3 today.py extra"]
     if d.get("bonus"):
         lines.append("⚡ Есть силы? +15 минут: %s" % d["bonus"])
     lines.append("🧱 Летит день? Минимум 15 минут и один коммит — напиши «мини».")
@@ -233,7 +271,7 @@ def ping(plan, st):
                 inf.get("topic", "—"), inf.get("task", ""), d.get("done_criteria", "")))
 
 
-def check(plan, st):
+def _check_body(plan, st):
     n, t = commits_today()
     dirty = uncommitted_today()
     d = day_entry(plan, st.get("current_day", 1))
@@ -283,6 +321,22 @@ def check(plan, st):
     return "\n".join(msg)
 
 
+def check(plan, st):
+    """Проверка дня + статус блока расширения."""
+    body = _check_body(plan, st)
+    d = day_entry(plan, st.get("current_day", 1))
+    extra = (d or {}).get("extra")
+    if extra:
+        mins = plan.get("minutes_split", {}).get("extra", 60)
+        if extra_done_today(d.get("day")):
+            week = extra_note(st)
+            body += "\n\n🔵 Расширение (%d мин) закрыто ✅ (файл в labs/ за сегодня). За 7 дней: %d" % (mins, week)
+        else:
+            body += ("\n\n🔵 Расширение (%d мин) ещё не закрыто.\n   Задача: %s\n   Критерий: %s"
+                     % (mins, extra.get("task", ""), extra.get("crit", "")))
+    return body
+
+
 def status(plan, st):
     hist = st.get("history") or []
     last7 = [h for h in hist if h["date"] >= (date.today() - timedelta(days=7)).isoformat()]
@@ -305,7 +359,8 @@ def weekly(plan, st):
              "даты зачётов: %s" % (", ".join(h["date"] for h in last7) or "нет"),
              "следующий день: %s" % theme_of(day_entry(plan, st.get("current_day", 1))),
              "последние зачёты: %s" % (", ".join("%s(%s)" % (h["date"], h["status"]) for h in hist[-7:]) or "нет"),
-             "всего зачётов: %d" % len(hist)]
+             "всего зачётов: %d" % len(hist),
+             "блок расширения за 7 дней: %d (гейт: 6 из 7 — тогда расширение становится обязательным)" % extra_week_count(st)]
     if len(last7) < 4:
         lines.append("ВЫВОД: менее 4 зачётов за неделю — нагрузка не держится, надо упростить план (15 минут/день, только одна дорожка).")
     return "\n".join(lines)
@@ -385,6 +440,18 @@ def main():
             print("Ожидаемо: %s\n" % dr.get("expect", ""))
             print("--- ЭТАЛОН (сверять ПОСЛЕ своей попытки) ---")
             print(dr.get("solution", ""))
+    elif mode == "extra":
+        d = day_entry(plan, st.get("current_day", 1)) or {}
+        ex = d.get("extra")
+        if not ex:
+            pass                      # расширения на сегодня нет — молчим
+        elif extra_done_today(d.get("day")):
+            extra_note(st)            # уже сделано — тоже молчим (watchdog)
+        else:
+            mins = plan.get("minutes_split", {}).get("extra", 60)
+            print("🔵 Блок расширения (%d мин) ещё не закрыт.\nЗадача: %s\nКритерий: %s\n"
+                  "Как закрыть: сделать лабу и записать результат в labs/ (любой файл с датой сегодня)."
+                  % (mins, ex.get("task", ""), ex.get("crit", "")))
     elif mode == "status":
         print(status(plan, st))
     elif mode == "weekly":
