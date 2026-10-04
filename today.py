@@ -217,14 +217,14 @@ def ping(plan, st):
         return "План пуст"
     start = st.get("started") or plan.get("start_date")
     if st.get("last_credited") == today_str():
-        return "⏰ Учебный день уже закрыт ✅ Серия: %s. Завтра в 08:30 — новый день." % plural(st.get("streak", 0))
+        return "⏰ Учебный день уже закрыт ✅ Серия: %s. Завтра утром — новый день." % plural(st.get("streak", 0))
     if st.get("intro_pending"):
         return ("⏰ Вводное занятие (30 минут, лёгкое): терминал + первый скрипт. "
                 "Открой папку курса, файл INTRO-DAY.md — там 5 шагов. Коммит = день закрыт.")
     if start and today_str() < start:
         return "⏰ План стартует %s. День 1 — %s." % (start, theme_of(day_entry(plan, 1)))
     py, inf = d.get("python", {}), d.get("infra", {})
-    return ("⏰ 20:00 — время заниматься. День %d · серия: %s\n"
+    return ("⏰ День пока не закрыт — время заниматься. День %d · серия: %s\n"
             "🐍 Python: %s\n   • %s\n"
             "🛠 Инфра: %s\n   • %s\n"
             "✅ Критерий: %s\n"
@@ -242,33 +242,33 @@ def check(plan, st):
     was_intro = (hist[-1].get("status") == "intro") if hist else False
     if st.get("last_credited") == today_str():
         if was_intro:
-            return ("🌙 22:30 — проверка. Вводное занятие зачтено ✅ (коммитов за сегодня: %d)\n"
-                    "Серия: %s (рекорд: %s). Завтра в 08:30 — день 1: %s." % (
+            return ("🔎 Проверка дня. Вводное занятие зачтено ✅ (коммитов за сегодня: %d)\n"
+                    "Серия: %s (рекорд: %s). Завтра утром — день 1: %s." % (
                         n, plural(st.get("streak", 0)), plural(st.get("best_streak", 0)), theme_of(d)))
-        return ("🌙 22:30 — проверка. Коммит(ы) за сегодня: %d ✅\nДень %d уже зачтён. Серия: %s (рекорд: %s).\n"
+        return ("🔎 Проверка дня. Коммит(ы) за сегодня: %d ✅\nДень %d уже зачтён. Серия: %s (рекорд: %s).\n"
                 "Завтра: день %d — %s." % (n, st.get("current_day", 1) - 1, plural(st.get("streak", 0)),
                                            plural(st.get("best_streak", 0)), st.get("current_day", 1),
                                            theme_of(day_entry(plan, st.get("current_day", 1)))))
     if st.get("intro_pending") and n > 0:
         credit(st, "intro")
-        return ("🌙 22:30 — проверка. Коммитов за сегодня: %d (последний в %s) ✅\n"
-                "Вводное занятие зачтено! Серия: %s. Завтра в 08:30 — день 1: %s." % (
+        return ("🔎 Проверка дня. Коммитов за сегодня: %d (последний в %s) ✅\n"
+                "Вводное занятие зачтено! Серия: %s. Завтра утром — день 1: %s." % (
                     n, t or "—", plural(st.get("streak", 0)), theme_of(d)))
     if st.get("intro_pending"):
-        return ("🌙 22:30 — проверка. Коммитов за сегодня: 0 ❌\n"
+        return ("🔎 Проверка дня. Коммитов за сегодня: 0 ❌\n"
                 "Вводное занятие ещё не закрыто. Минимум: файл hello.py и один коммит — зачту сразу.\n"
                 "Серия пока: %s." % plural(st.get("streak", 0)))
     if start and today_str() < start:
-        return ("🌙 22:30 — проверка. План стартует %s, сегодня коммиты не считаю.\nПервый день — %s."
+        return ("🔎 Проверка дня. План стартует %s, сегодня коммиты не считаю.\nПервый день — %s."
                 % (start, theme_of(day_entry(plan, 1))))
     if n > 0:
         credit(st, "done")
-        return ("🌙 22:30 — проверка. Коммитов за сегодня: %d (последний в %s) ✅\n"
+        return ("🔎 Проверка дня. Коммитов за сегодня: %d (последний в %s) ✅\n"
                 "День %d зачтён автоматически. Серия: %s (рекорд: %s).\nЗавтра: день %d — %s." % (
                     n, t or "—", st.get("current_day", 1) - 1, plural(st.get("streak", 0)),
                     plural(st.get("best_streak", 0)), st.get("current_day", 1),
                     theme_of(day_entry(plan, st.get("current_day", 1)))))
-    msg = ["🌙 22:30 — проверка. Коммитов за сегодня: 0 ❌"]
+    msg = ["🔎 Проверка дня. Коммитов за сегодня: 0 ❌"]
     if dirty:
         msg.append("Но в репозитории есть несохранённые изменения (%d). Если работали — закоммитьте, и день зачтётся сам." % dirty)
     if d:
@@ -363,12 +363,12 @@ def main():
               "4) 5 мин — ответить на вопрос дня в intro-notes.md\n"
               "5) 3 мин — git add -A && git commit -m \"intro: вводное занятие\"\n\n"
               "✅ Зачёт: коммит за сегодня. Проверка в 22:30 зачтёт автоматически.\n"
-              "Завтра в 08:30 — день 1: %s" % theme_of(day_entry(plan, 1)))
+              "Завтра утром — день 1: %s" % theme_of(day_entry(plan, 1)))
     elif mode in ("intro-done", "intro_done"):
         ok = credit(st, "intro")
         st["intro_pending"] = False
         save_state(st)
-        print("✅ Вводное занятие зачтено. Серия: %s. Завтра в 08:30 — день 1: %s" % (
+        print("✅ Вводное занятие зачтено. Серия: %s. Завтра утром — день 1: %s" % (
             plural(st["streak"]), theme_of(day_entry(plan, 1))) if ok else "Сегодня уже зачтено.")
     elif mode == "mini":
         ok = credit(st, "mini")
