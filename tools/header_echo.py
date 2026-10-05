@@ -25,6 +25,6 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8090
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8091
     print(f"header_echo слушает {port}", flush=True)
     ThreadingHTTPServer(("127.0.0.1", port), Handler).serve_forever()
