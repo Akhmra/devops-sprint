@@ -65,8 +65,8 @@
    "question": "Что происходит по шагам, когда браузер открывает https://site? Где ставится TLS, где балансировка, где приложение?",
    "done_criteria": "коммит за сегодня: конфиг nginx + сертификат + tools/httpcheck.py, который зелёный на https://localhost",
    "extra": {
-    "task": "Поставить nginx reverse proxy перед своим HTTP-сервисом (из дня 15/16): проксировать /report на 127.0.0.1:8081, добавить заголовок X-Real-IP и снять curl -v.",
-    "crit": "в labs/day03.md: вывод `curl -v http://127.0.0.1/` с заголовком X-Real-IP и `ss -lntup | grep 80`"
+    "task": "Доказать, что прокси добавляет заголовки: поднять tools/header_echo.py на 8091, направить на него location /echo/ в том же nginx (порт 8443) и снять ответ.",
+    "crit": "в labs/day03.md: вывод `curl -sk https://localhost:8443/echo/ping` с X-Real-IP, X-Forwarded-For, X-Forwarded-Proto + `ss -lntp | grep 8443`"
    }
   },
   {
