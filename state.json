@@ -27,5 +27,8 @@
  ],
  "mini_count": 3,
  "started": "2026-10-03",
- "intro_pending": false
+ "intro_pending": false,
+ "extra_done": [
+  "2026-10-05"
+ ]
 }
