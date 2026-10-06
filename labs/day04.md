@@ -82,3 +82,9 @@ rafael@vm-hermes:~/devops-sprint$ docker build -t devcheck:${{ github.sha }} .
 -bash: devcheck:${{ github.sha }}: bad substitution
 rafael@vm-hermes:~/devops-sprint$ sudo docker images | grep localhost:5000
 localhost:5000/devcheck   0.1.0          ef03386e6b9e   2 hours ago      125MB
+
+
+python:3.9-slim   → 122 МБ
+python:3.9-alpine → 51.3 МБ
+вывод: alpine дешевле на 70 МБ, но другой набор утилит → в базовом образе нет useradd,
+сборка без правки падает; musl вместо glibc — та же тема, что с колёсами в дни 15–16.
