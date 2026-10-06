@@ -70,7 +70,7 @@ def pct(used, total):
     return f"{used / total * 100:.1f}"        # '38.5' — строка с одним знаком
 
 def is_over(value, limit):
-    return value > limit                       # True/False
+    return value >= limit                       # True/False
 
 
 def main() -> int:
