@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Генератор плана DevOps-спринта (16 дней, 3–18 октября 2026), 150 минут в день.
+"""Генератор плана DevOps-спринта (16 дней, 3–19 октября 2026), 210 минут в день (150 ядро + 60 расширение).
 
 Источник правды. Правишь DAYS → запускаешь `python3 build_plan.py` → plan.json пересобирается,
 state.json (прогресс) не трогается.
@@ -11,10 +11,43 @@ from datetime import date, timedelta
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
 START = "2026-10-03"
-END = "2026-10-18"
-MINUTES_TOTAL = 150          # 2,5 часа: 60 автоматизация + 60 инфра/DevOps + 30 конспект и разбор
-SPLIT = {"python": 60, "infra": 60, "notes": 30}
+END = "2026-10-19"
+MINUTES_TOTAL = 210          # ядро 150 (60 автоматизация + 60 инфра/DevOps + 30 конспект) + 60 блок расширения
+SPLIT = {"python": 60, "infra": 60, "notes": 30, "extra": 60}
 DRILL_MINUTES = 15           # входит в блок автоматизации
+
+
+# ------------------------------------------------- блоки расширения (60 мин практики)
+EXTRA = {
+ 3: dict(task="Доказать, что прокси добавляет заголовки: поднять tools/header_echo.py на 8091, направить на него location /echo/ в том же nginx (порт 8443) и снять ответ.",
+         crit="в labs/day03.md: вывод `curl -sk https://localhost:8443/echo/ping` с X-Real-IP, X-Forwarded-For, X-Forwarded-Proto + `ss -lntp | grep 8443`"),
+ 4: dict(task="Собрать образ своего инструмента в двух вариантах (slim и alpine), протегировать semver (1.0.0 и latest), замерить размеры и добавить в CI job сборки образа.",
+         crit="в labs/day04.md: таблица размеров двух образов + зелёный CI с шагом сборки"),
+ 5: dict(task="Развернуть в k3s первый pod из своего образа (k3s ctr images import) и посмотреть, что происходит на уровне кластера.",
+         crit="в labs/day05.md: `kubectl get nodes,pods -o wide` + `kubectl describe pod`"),
+ 6: dict(task="Развернуть свой /health-сервис в k3s: Deployment + Service + ConfigMap + Secret, liveness/readiness probes; проверить доступ через NodePort и убить pod.",
+         crit="в labs/day06.md: манифесты в repo + вывод `kubectl get pods` до и после `kubectl delete pod`"),
+ 7: dict(task="Postgres в k3s с PVC: записать строку, удалить pod, проверить сохранность данных. Плюс Job, который делает дамп таблицы.",
+         crit="в labs/day07.md: `kubectl get pvc` + результат select после пересоздания pod"),
+ 8: dict(task="Довести workflow: matrix по версиям Python, кэш pip, сборка образа и upload-artifact; сознательно сломать тест и увидеть красный CI.",
+         crit="в labs/day08.md: ссылка на красный и зелёный прогон + вывод `gh run list`"),
+ 9: dict(task="Поднять в compose Prometheus + свой экспортёр /metrics (из дня 9) и node-exporter; написать 3 запроса PromQL и правило алерта.",
+         crit="в labs/day09.md: три PromQL-запроса с выводом и правило алерта в prometheus.yml"),
+ 10: dict(task="Сделать алертинг до конца: свой скрипт читает лог, считает ошибки за 5 минут и отправляет сообщение в твой Telegram-бот при превышении порога.",
+          crit="в labs/day10.md: скрин/лог сработавшего уведомления и текст порога"),
+ 11: dict(task="Ansible на localhost: playbook, который идемпотентно настраивает nginx (пакет, конфиг, сервис). Прогнать дважды и показать разницу changed.",
+          crit="в labs/day11.md: вывод двух прогонов (changed=3 → changed=0)"),
+ 12: dict(task="Бэкап по-взрослому: pg_dump в файл, восстановление в новую БД, проверка контрольной суммы строк. Плюс расписание бэкапа через systemd-таймер.",
+          crit="в labs/day12.md: команды дампа/восстановления и сверка количества строк"),
+ 13: dict(task="Аудит своего сервера своим же скриптом: открытые порты, права на файлы, устаревшие пакеты, лишние сервисы. Оформить отчёт и починить одну находку.",
+          crit="в labs/day13.md: отчёт аудита + описание исправленной находки и её проверка"),
+ 14: dict(task="Провести учение: остановить свой сервис, замерить MTTA/MTTR, собрать таймлайн и написать постмортем по структуре из скилла incident-impact-status.",
+          crit="в labs/day13.md и labs/day14.md: таймлайн, MTTA/MTTR в цифрах, постмортем с первопричиной"),
+ 15: dict(task="Инвентарь облака вручную: описать свою ВМ в терминах Cloud.ru (flavor, диск, сеть, образ) и посчитать стоимость трёх вариантов конфигурации.",
+          crit="в labs/day15.md: таблица ресурсов ВМ и расчёт стоимости 2 vCPU/4 ГБ против 4 vCPU/8 ГБ"),
+ 16: dict(task="Собрать питч стажировки: README-обзор репозитория (архитектура, что умеет, CI-статус) + короткая демонстрация сквозного пайплайна.",
+          crit="в labs/day16.md: структура питча и вывод финального демо-прогона"),
+}
 
 # ---------------------------------------------------------------- дни спринта
 DAYS = [
@@ -26,7 +59,7 @@ DAYS = [
    inf=dict(
    topic="Кто такой DevOps/SRE в облачном провайдере: зоны ответственности, CI/CD, IaC, мониторинг, on-call",
    source="https://ru.wikipedia.org/wiki/DevOps",
-   task="Репозиторий ~/devops-sprint: git init, .gitignore, README с целью спринта и дедлайном 18.10, "
+   task="Репозиторий ~/devops-sprint: git init, .gitignore, README с целью спринта и дедлайном 19.10, "
         "затем GitHub (gh auth login → gh repo create devops-sprint → push) и первый workflow-заготовка; "
         "в devops-notes.md — карта компетенций стажировки: 10 пунктов, у каждого свой уровень 0–3 и чем закрываю"),
    q="Чем DevOps отличается от SRE и от системного администратора? Где в облаке проходит граница ответственности провайдера и клиента?",
@@ -307,6 +340,8 @@ def main():
         dd["infra"] = dd.pop("inf")
         dd["question"] = dd.pop("q")
         dd["done_criteria"] = dd.pop("done")
+        if dd["day"] in EXTRA:
+            dd["extra"] = EXTRA[dd["day"]]
         days.append(dd)
     plan = {
         "title": "DevOps-спринт: подготовка к стажировке (ускоренный курс)",

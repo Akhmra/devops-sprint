@@ -1,7 +1,7 @@
 {
  "title": "DevOps-спринт: подготовка к стажировке (ускоренный курс)",
  "start_date": "2026-10-03",
- "end_date": "2026-10-18",
+ "end_date": "2026-10-19",
  "minutes_total": 210,
  "minutes_split": {
   "python": 60,
@@ -24,7 +24,7 @@
    "infra": {
     "topic": "Кто такой DevOps/SRE в облачном провайдере: зоны ответственности, CI/CD, IaC, мониторинг, on-call",
     "source": "https://ru.wikipedia.org/wiki/DevOps",
-    "task": "Репозиторий ~/devops-sprint: git init, .gitignore, README с целью спринта и дедлайном 18.10, затем GitHub (gh auth login → gh repo create devops-sprint → push) и первый workflow-заготовка; в devops-notes.md — карта компетенций стажировки: 10 пунктов, у каждого свой уровень 0–3 и чем закрываю"
+    "task": "Репозиторий ~/devops-sprint: git init, .gitignore, README с целью спринта и дедлайном 19.10, затем GitHub (gh auth login → gh repo create devops-sprint → push) и первый workflow-заготовка; в devops-notes.md — карта компетенций стажировки: 10 пунктов, у каждого свой уровень 0–3 и чем закрываю"
    },
    "question": "Чем DevOps отличается от SRE и от системного администратора? Где в облаке проходит граница ответственности провайдера и клиента?",
    "done_criteria": "коммит за сегодня: README.md + tools/devcheck.py, который запускается и печатает показатели этой ВМ"
@@ -176,7 +176,7 @@
    "done_criteria": "коммит за сегодня: .github/workflows/ci.yml + scripts/ci.py; Actions зелёный и заканчивается новой версией в k3s",
    "extra": {
     "task": "Довести workflow: matrix по версиям Python, кэш pip, сборка образа и upload-artifact; сознательно сломать тест и увидеть красный CI.",
-    "crit": "в labs/day08.md: ссылка на красный и зелёный прогон + скрин/вывод `gh run list`"
+    "crit": "в labs/day08.md: ссылка на красный и зелёный прогон + вывод `gh run list`"
    }
   },
   {
@@ -308,7 +308,7 @@
    "done_criteria": "коммит за сегодня: постмортем учебного инцидента с таймлайном и тремя действиями",
    "extra": {
     "task": "Провести учение: остановить свой сервис, замерить MTTA/MTTR, собрать таймлайн и написать постмортем по структуре из скилла incident-impact-status.",
-    "crit": "в labs/day14.md: таймлайн, MTTA/MTTR в цифрах, постмортем с первопричиной"
+    "crit": "в labs/day13.md и labs/day14.md: таймлайн, MTTA/MTTR в цифрах, постмортем с первопричиной"
    }
   },
   {
