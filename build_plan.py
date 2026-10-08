@@ -11,7 +11,7 @@ from datetime import date, timedelta
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
 START = "2026-10-03"
-END = "2026-10-19"
+END = "2026-10-20"
 MINUTES_TOTAL = 210          # ядро 150 (60 автоматизация + 60 инфра/DevOps + 30 конспект) + 60 блок расширения
 SPLIT = {"python": 60, "infra": 60, "notes": 30, "extra": 60}
 DRILL_MINUTES = 15           # входит в блок автоматизации
