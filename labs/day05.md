@@ -67,3 +67,28 @@ Rolling back will not update the 'last-applied-configuration' annotation...
 - `kubectl rollout status|undo|history deployment devcheck` — выкат, откат, история
 - `kubectl get rs -l app=devcheck` — репликасеты по ревизиям (видно, что реально выкатывалось)
 - `sudo k3s ctr images list | grep <образ>` — какие образы видит кластер
+
+
+## вывод get pods -o wide + describe pod + история про 127.0.0.1 (главный урок)
+
+rafael@vm-hermes:~/devops-sprint$ sudo k3s kubectl get pods -w                  NAME                        READY   STATUS        RESTARTS   AGE
+devcheck-7cd9c96664-2rz4n   1/1     Running       0          39m
+devcheck-7cd9c96664-kqf29   1/1     Terminating   0          77s
+devcheck-7cd9c96664-n2wvj   1/1     Running       0          39m
+
+rafael@vm-hermes:~/devops-sprint$ sudo k3s kubectl describe pod -l app=devcheck | tail -15
+  Initialized                 True
+  Ready                       True
+  ContainersReady             True
+  PodScheduled                True
+Volumes:
+  kube-api-access-fj8w4:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    Optional:                false
+    DownwardAPI:             true
+QoS Class:                   Burstable
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
