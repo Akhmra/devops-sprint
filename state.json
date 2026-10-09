@@ -1,8 +1,8 @@
 {
- "current_day": 5,
- "streak": 24,
- "best_streak": 24,
- "last_credited": "2026-10-06",
+ "current_day": 6,
+ "streak": 25,
+ "best_streak": 25,
+ "last_credited": "2026-10-09",
  "history": [
   {
    "date": "2026-10-02",
@@ -27,6 +27,11 @@
   {
    "date": "2026-10-06",
    "day": 4,
+   "status": "done"
+  },
+  {
+   "date": "2026-10-09",
+   "day": 5,
    "status": "done"
   }
  ],
