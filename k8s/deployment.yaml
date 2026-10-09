@@ -33,7 +33,7 @@
             "env": [
               {
                 "name": "APP_VERSION",
-                "value": "v2"
+                "value": "v1"
               }
             ],
             "resources": {
