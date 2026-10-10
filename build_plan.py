@@ -11,7 +11,7 @@ from datetime import date, timedelta
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
 START = "2026-10-03"
-END = "2026-10-20"
+END = "2026-10-21"
 MINUTES_TOTAL = 210          # ядро 150 (60 автоматизация + 60 инфра/DevOps + 30 конспект) + 60 блок расширения
 SPLIT = {"python": 60, "infra": 60, "notes": 30, "extra": 60}
 DRILL_MINUTES = 15           # входит в блок автоматизации
@@ -59,7 +59,7 @@ DAYS = [
    inf=dict(
    topic="Кто такой DevOps/SRE в облачном провайдере: зоны ответственности, CI/CD, IaC, мониторинг, on-call",
    source="https://ru.wikipedia.org/wiki/DevOps",
-   task="Репозиторий ~/devops-sprint: git init, .gitignore, README с целью спринта и дедлайном 19.10, "
+   task="Репозиторий ~/devops-sprint: git init, .gitignore, README с целью спринта и дедлайном 21.10, "
         "затем GitHub (gh auth login → gh repo create devops-sprint → push) и первый workflow-заготовка; "
         "в devops-notes.md — карта компетенций стажировки: 10 пунктов, у каждого свой уровень 0–3 и чем закрываю"),
    q="Чем DevOps отличается от SRE и от системного администратора? Где в облаке проходит граница ответственности провайдера и клиента?",

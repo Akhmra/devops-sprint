@@ -1,359 +1,359 @@
 {
-  "title": "DevOps-спринт: подготовка к стажировке (ускоренный курс)",
-  "start_date": "2026-10-03",
-  "end_date": "2026-10-20",
-  "minutes_total": 210,
-  "minutes_split": {
-    "python": 60,
-    "infra": 60,
-    "notes": 30,
-    "extra": 60
+ "title": "DevOps-спринт: подготовка к стажировке (ускоренный курс)",
+ "start_date": "2026-10-03",
+ "end_date": "2026-10-21",
+ "minutes_total": 210,
+ "minutes_split": {
+  "python": 60,
+  "infra": 60,
+  "notes": 30,
+  "extra": 60
+ },
+ "drill_minutes": 15,
+ "days": [
+  {
+   "day": 1,
+   "bonus": "добавить в devcheck.py ключ --threshold и текст предупреждения",
+   "week": 1,
+   "python": {
+    "topic": "CLI devcheck: инвентарь сервера (CPU, RAM, диск) на чистой стандартной библиотеке",
+    "source": "https://docs.python.org/3/library/argparse.html",
+    "theory": "argparse: позиционные аргументы, флаги, --json, код возврата. Чтение /proc/loadavg, /proc/meminfo, shutil.disk_usage.",
+    "code": "tools/devcheck.py --json → {'cpu_load','mem_used_pct','disk_used_pct','ok'} и код возврата 1, если превышен порог"
+   },
+   "infra": {
+    "topic": "Кто такой DevOps/SRE в облачном провайдере: зоны ответственности, CI/CD, IaC, мониторинг, on-call",
+    "source": "https://ru.wikipedia.org/wiki/DevOps",
+    "task": "Репозиторий ~/devops-sprint: git init, .gitignore, README с целью спринта и дедлайном 21.10, затем GitHub (gh auth login → gh repo create devops-sprint → push) и первый workflow-заготовка; в devops-notes.md — карта компетенций стажировки: 10 пунктов, у каждого свой уровень 0–3 и чем закрываю"
+   },
+   "question": "Чем DevOps отличается от SRE и от системного администратора? Где в облаке проходит граница ответственности провайдера и клиента?",
+   "done_criteria": "коммит за сегодня: README.md + tools/devcheck.py, который запускается и печатает показатели этой ВМ"
   },
-  "drill_minutes": 15,
-  "days": [
-    {
-      "day": 1,
-      "bonus": "добавить в devcheck.py ключ --threshold и текст предупреждения",
-      "week": 1,
-      "python": {
-        "topic": "CLI devcheck: инвентарь сервера (CPU, RAM, диск) на чистой стандартной библиотеке",
-        "source": "https://docs.python.org/3/library/argparse.html",
-        "theory": "argparse: позиционные аргументы, флаги, --json, код возврата. Чтение /proc/loadavg, /proc/meminfo, shutil.disk_usage.",
-        "code": "tools/devcheck.py --json → {'cpu_load','mem_used_pct','disk_used_pct','ok'} и код возврата 1, если превышен порог"
-      },
-      "infra": {
-        "topic": "Кто такой DevOps/SRE в облачном провайдере: зоны ответственности, CI/CD, IaC, мониторинг, on-call",
-        "source": "https://ru.wikipedia.org/wiki/DevOps",
-        "task": "Репозиторий ~/devops-sprint: git init, .gitignore, README с целью спринта и дедлайном 19.10, затем GitHub (gh auth login → gh repo create devops-sprint → push) и первый workflow-заготовка; в devops-notes.md — карта компетенций стажировки: 10 пунктов, у каждого свой уровень 0–3 и чем закрываю"
-      },
-      "question": "Чем DevOps отличается от SRE и от системного администратора? Где в облаке проходит граница ответственности провайдера и клиента?",
-      "done_criteria": "коммит за сегодня: README.md + tools/devcheck.py, который запускается и печатает показатели этой ВМ"
-    },
-    {
-      "day": 2,
-      "bonus": "лог-парсер читает вывод journalctl -o json через subprocess",
-      "week": 1,
-      "python": {
-        "topic": "Разбор логов: топ сообщений и ошибки за сутки",
-        "source": "https://docs.python.org/3/library/collections.html",
-        "theory": "collections.Counter, re, чтение больших файлов построчно, сортировка по частоте.",
-        "code": "tools/logparse.py /var/log/syslog → топ-5 сообщений по частоте и список строк со словом error"
-      },
-      "infra": {
-        "topic": "Linux как продакшн-платформа: процессы и ресурсы, systemd-юниты и таймеры, journald, диагностика (ps, ss, lsof, strace)",
-        "source": "https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html",
-        "task": "Написать systemd-юнит devcheck.service + devcheck.timer, который раз в час кладёт вывод devcheck в /var/log/devcheck.log; проверить systemctl list-timers, journalctl -u, посмотреть ресурсы через ps/top"
-      },
-      "question": "Чем systemd-таймер отличается от cron и почему в проде часто выбирают таймер? Как понять, почему сервис упал: порядок действий?",
-      "done_criteria": "коммит за сегодня: tools/logparse.py + devcheck.service/.timer; systemctl list-timers показывает твой таймер"
-    },
-    {
-      "day": 3,
-      "bonus": "разобрать, что нужно для настоящего сертификата Let's Encrypt (домен, 80-й порт, certbot)",
-      "week": 1,
-      "python": {
-        "topic": "Сетевой чекер: HTTP с таймаутом и повторными попытками",
-        "source": "https://docs.python.org/3/library/urllib.request.html",
-        "theory": "urllib.request, таймауты, коды ответа, измерение времени ответа, повторные попытки с паузой.",
-        "code": "tools/httpcheck.py URL... → код, время в мс, метка ok/fail; повтор 3 раза при ошибке"
-      },
-      "infra": {
-        "topic": "Сеть, DNS, TLS и вход в сервис: nginx как reverse proxy, порты, сертификаты, диагностика dig/curl -v/ss/tcpdump",
-        "source": "https://docs.nginx.com/nginx/admin-guide/web-server/reverse-proxy/",
-        "task": "Поднять на этой ВМ nginx: 443 (TLS, самоподписанный сертификат) → проксирует на локальный сервис; проверить openssl s_client и curl -vk, записать в net-sprint.md цепочку запроса"
-      },
-      "question": "Что происходит по шагам, когда браузер открывает https://site? Где ставится TLS, где балансировка, где приложение?",
-      "done_criteria": "коммит за сегодня: конфиг nginx + сертификат + tools/httpcheck.py, который зелёный на https://localhost",
-      "extra": {
-        "task": "Доказать, что прокси добавляет заголовки: поднять tools/header_echo.py на 8091, направить на него location /echo/ в том же nginx (порт 8443) и снять ответ.",
-        "crit": "в labs/day03.md: вывод `curl -sk https://localhost:8443/echo/ping` с X-Real-IP, X-Forwarded-For, X-Forwarded-Proto + `ss -lntp | grep 8443`"
-      }
-    },
-    {
-      "day": 4,
-      "bonus": "сравнить размер образов python:3.9-slim и python:3.9-alpine и объяснить разницу; разобрать, чем GHCR отличается от локального реестра",
-      "week": 1,
-      "python": {
-        "topic": "Упаковка инструмента: модуль, тесты и разбор требований",
-        "source": "https://docs.pytest.org/en/stable/",
-        "theory": "структура модуля, pytest: assert, фикстуры, параметризация; запуск тестов в контейнере.",
-        "code": "tests/test_devcheck.py — 3 теста на свои функции, запуск pytest и вывод 'N passed'"
-      },
-      "infra": {
-        "topic": "Контейнеры и реестр образов: multi-stage, non-root, healthcheck, теги semver, сканирование уязвимостей",
-        "source": "https://docs.docker.com/build/building/multi-stage/",
-        "task": "Собрать образ devcheck: multi-stage, non-root, HEALTHCHECK, .dockerignore; поднять локальный реестр (registry:2) и запушить тег 0.1.0; проверить состав образа и его размер"
-      },
-      "question": "Чем плох тег latest и как правильно версионировать образы? Что показывает сканер уязвимостей?",
-      "done_criteria": "коммит за сегодня: Dockerfile + проходящие тесты + образ 0.1.0 в локальном реестре (docker images | grep registry)",
-      "extra": {
-        "task": "Собрать образ своего инструмента в двух вариантах (slim и alpine), протегировать semver (1.0.0 и latest), замерить размеры и добавить в CI job сборки образа.",
-        "crit": "в labs/day04.md: таблица размеров двух образов + зелёный CI с шагом сборки"
-      }
-    },
-    {
-      "day": 5,
-      "bonus": "прокатить новую версию образа и откатиться через kubectl rollout undo",
-      "week": 1,
-      "python": {
-        "topic": "Генератор манифестов: Python как источник правды для Kubernetes",
-        "source": "https://docs.python.org/3/library/json.html",
-        "theory": "шаблонизация словаря → YAML/JSON, проверка манифеста kubectl --dry-run=client.",
-        "code": "tools/k8sgen.py --image devcheck:0.1.0 --replicas 2 → k8s/deployment.yaml и k8s/service.yaml"
-      },
-      "infra": {
-        "topic": "Kubernetes: архитектура (control plane, etcd, kubelet, scheduler), k3s на этой ВМ, Deployment/ReplicaSet, rollout и rollback",
-        "source": "https://kubernetes.io/ru/docs/concepts/overview/",
-        "task": "Установить/проверить k3s, разобрать kubectl get/describe/logs/scale, задеплоить свой образ из Dockerfile до 2 реплик, сделать rollout и rollback версии"
-      },
-      "question": "Из каких частей состоит кластер k8s и что произойдёт, если упадёт control plane или один worker? Чем Deployment отличается от Pod?",
-      "done_criteria": "коммит за сегодня: k8s/ манифесты; kubectl get pods показывает 2/2 Running твоего образа",
-      "extra": {
-        "task": "Развернуть в k3s первый pod из своего образа (k3s ctr images import) и посмотреть, что происходит на уровне кластера.",
-        "crit": "в labs/day05.md: `kubectl get nodes,pods -o wide` + `kubectl describe pod`"
-      }
-    },
-    {
-      "day": 6,
-      "bonus": "поставить заведомо неверную readiness-пробу и объяснить поведение кластера",
-      "week": 1,
-      "python": {
-        "topic": "HTTP-сервис на стандартной библиотеке: /health и /metrics",
-        "source": "https://docs.python.org/3/library/http.server.html",
-        "theory": "http.server, маршрутизация по пути, переменные окружения как конфиг, формат метрик Prometheus.",
-        "code": "service/app.py: /health → {'status':'ok'}, /metrics → метрики в формате Prometheus, / → версия и конфиг"
-      },
-      "infra": {
-        "topic": "Сервис, конфиг и секреты в k8s: Service, ConfigMap, Secret, probes, requests/limits, namespace, Ingress",
-        "source": "https://kubernetes.io/docs/concepts/configuration/configmap/",
-        "task": "Выложить сервис с liveness/readiness-probe, конфигом из ConfigMap и паролем из Secret, открыть наружу через Ingress/NodePort; проверить, что pod переживает удаление (kubectl delete pod)"
-      },
-      "question": "Зачем нужны liveness и readiness пробы по отдельности? Что будет, если пробу поставить неверно?",
-      "done_criteria": "коммит за сегодня: манифесты ConfigMap/Secret/Ingress + /health и /metrics отвечают снаружи кластера",
-      "extra": {
-        "task": "Развернуть свой /health-сервис в k3s: Deployment + Service + ConfigMap + Secret, liveness/readiness probes; проверить доступ через NodePort и убить pod.",
-        "crit": "в labs/day06.md: манифесты в repo + вывод `kubectl get pods` до и после `kubectl delete pod`"
-      }
-    },
-    {
-      "day": 7,
-      "bonus": "HPA: настроить автомасштабирование по CPU и посмотреть, как меняется число реплик",
-      "week": 1,
-      "python": {
-        "topic": "Отчёт о состоянии кластера из скрипта",
-        "source": "https://docs.python.org/3/library/subprocess.html",
-        "theory": "subprocess и разбор JSON-вывода kubectl, обработка ошибок и кодов возврата.",
-        "code": "tools/clustercheck.py → сохраняет отчёт: узлы, поды не в Running, рестарты контейнеров"
-      },
-      "infra": {
-        "topic": "Состояние в k8s и разбор сбоев: Volume/PVC, StatefulSet, Job/CronJob, диагностика CrashLoopBackOff, OOMKilled, ImagePullBackOff",
-        "source": "https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
-        "task": "Подключить PVC к своему сервису, сделать CronJob по расписанию; сломать под (несуществующий образ / лишний лимит памяти) и разобрать сбой по describe + logs + events, записать разбор в troubleshooting.md"
-      },
-      "question": "С чего начинаешь разбор упавшего пода в k8s? Какие три команды идут первыми и что каждая показывает?",
-      "done_criteria": "коммит за сегодня: PVC + CronJob + записанный разбор одного реального сбоя",
-      "extra": {
-        "task": "Postgres в k3s с PVC: записать строку, удалить pod, проверить сохранность данных. Плюс Job, который делает дамп таблицы.",
-        "crit": "в labs/day07.md: `kubectl get pvc` + результат select после пересоздания pod"
-      }
-    },
-    {
-      "day": 8,
-      "bonus": "добавить в пайплайн smoke-тест после деплоя, который валит пайплайн при 500-й ошибке",
-      "week": 2,
-      "python": {
-        "topic": "Пайплайн CI/CD как скрипт: стадии, стоп на первой ошибке, отчёт",
-        "source": "https://docs.python.org/3/library/subprocess.html",
-        "theory": "стадии пайплайна, коды возврата, остановка на ошибке, логирование шагов.",
-        "code": "scripts/ci.py: lint → test → build → push → deploy, остановка на первой красной стадии"
-      },
-      "infra": {
-        "topic": "CI/CD: GitHub Actions (jobs, steps, secrets, cache), локальный прогон пайплайна в Docker, деплой в k3s, откат",
-        "source": "https://docs.github.com/en/actions/get-started/quickstart",
-        "task": "Пайплайн в GitHub Actions: lint → test → build → push образа в GHCR → деплой на ВМ (self-hosted runner или SSH-ключ); секреты, кэш и условия в workflow; тот же путь — локально через scripts/ci.py; проверить откат при падении стадии"
-      },
-      "question": "Какие стадии обязаны быть в пайплайне перед продом? Что такое 'сборка один раз, деплой везде' и зачем это правило?",
-      "done_criteria": "коммит за сегодня: .github/workflows/ci.yml + scripts/ci.py; Actions зелёный и заканчивается новой версией в k3s",
-      "extra": {
-        "task": "Довести workflow: matrix по версиям Python, кэш pip, сборка образа и upload-artifact; сознательно сломать тест и увидеть красный CI.",
-        "crit": "в labs/day08.md: ссылка на красный и зелёный прогон + вывод `gh run list`"
-      }
-    },
-    {
-      "day": 9,
-      "bonus": "правило алерта 'сервис недоступен 2 минуты' и проверка его срабатывания",
-      "week": 2,
-      "python": {
-        "topic": "Свой экспортёр метрик для сервиса",
-        "source": "https://prometheus.io/docs/instrumenting/exposition_formats/",
-        "theory": "типы метрик (counter, gauge, histogram), формат exposition, вычисление перцентилей.",
-        "code": "в сервисе: счётчик запросов, время ответа, счётчик ошибок — и /metrics их отдаёт"
-      },
-      "infra": {
-        "topic": "Мониторинг: Prometheus, node-exporter, PromQL, RED/USE, дашборд Grafana, правило алерта",
-        "source": "https://prometheus.io/docs/introduction/overview/",
-        "task": "Поднять в compose Prometheus + node-exporter + Grafana, настроить сбор метрик своего сервиса и ВМ; сделать дашборд на 6 панелей; написать запрос rate() и histogram_quantile()"
-      },
-      "question": "Чем SLI отличается от SLO и от метрики? Какие метрики ты бы поставил на сервис в первый день?",
-      "done_criteria": "коммит за сегодня: compose-файл мониторинга + dashboard.json; в Grafana видны метрики сервиса и ВМ",
-      "extra": {
-        "task": "Поднять в compose Prometheus + свой экспортёр /metrics (из дня 9) и node-exporter; написать 3 запроса PromQL и правило алерта.",
-        "crit": "в labs/day09.md: три PromQL-запроса с выводом и правило алерта в prometheus.yml"
-      }
-    },
-    {
-      "day": 10,
-      "bonus": "постмортем по учебному инциденту: таймлайн, причина, что меняем",
-      "week": 2,
-      "python": {
-        "topic": "Алертер с антидребезгом: порог держится N минут — шлём один раз",
-        "source": "https://docs.python.org/3/library/smtplib.html",
-        "theory": "состояние между запусками (файл), окно подавления, дедупликация, отправка в мессенджер.",
-        "code": "tools/alerter.py: читает цель, держит состояние в JSON, шлёт уведомление один раз на инцидент"
-      },
-      "infra": {
-        "topic": "Логи, алерты и инцидент: сбор логов (Loki/promtail или journald), структурированные логи, Alertmanager → Telegram, разбор по логам",
-        "source": "https://grafana.com/docs/loki/latest/",
-        "task": "Собрать логи сервиса в одном месте, настроить маршрут алерта в Telegram, убить сервис и разобрать инцидент по логам; результат — runbook на одну страницу (симптом → проверки → действия)"
-      },
-      "question": "Как по логам отличить проблему приложения от проблемы инфраструктуры? Какие поля обязаны быть в структурированном логе?",
-      "done_criteria": "коммит за сегодня: runbook.md + сработавший алерт, зафиксированный в notes",
-      "extra": {
-        "task": "Сделать алертинг до конца: свой скрипт читает лог, считает ошибки за 5 минут и отправляет сообщение в твой Telegram-бот при превышении порога.",
-        "crit": "в labs/day10.md: скрин/лог сработавшего уведомления и текст порога"
-      }
-    },
-    {
-      "day": 11,
-      "bonus": "секреты в Ansible: ansible-vault encrypt строки",
-      "week": 2,
-      "python": {
-        "topic": "Инвентарь из данных: генерация конфигов и проверка идемпотентности",
-        "source": "https://docs.python.org/3/library/string.html",
-        "theory": "данные → конфиг (словарь + шаблон), проверка 'ничего не изменилось' повторным прогоном.",
-        "code": "tools/inventory.py hosts.yml → inventory.ini + diff с предыдущей версией"
-      },
-      "infra": {
-        "topic": "Инфраструктура как код: Ansible (инвентарь, playbook, роли, идемпотентность), Terraform верхнеуровнево (state, plan, apply)",
-        "source": "https://docs.ansible.com/ansible/latest/getting_started/index.html",
-        "task": "Playbook, который настраивает эту ВМ (пакеты + nginx + пользователь): первый прогон changed>0, второй прогон changed=0; записать в iac-notes.md разницу Ansible и Terraform"
-      },
-      "question": "Что такое идемпотентность и почему без неё IaC бесполезен? Где место Ansible, а где Terraform?",
-      "done_criteria": "коммит за сегодня: playbook + вывод второго прогона с changed=0",
-      "extra": {
-        "task": "Ansible на localhost: playbook, который идемпотентно настраивает nginx (пакет, конфиг, сервис). Прогнать дважды и показать разницу changed.",
-        "crit": "в labs/day11.md: вывод двух прогонов (changed=3 → changed=0)"
-      }
-    },
-    {
-      "day": 12,
-      "bonus": "автопроверка: restore в временную базу + count + алерт при расхождении",
-      "week": 2,
-      "python": {
-        "topic": "Бэкап и проверка восстановления скриптом",
-        "source": "https://docs.python.org/3/library/gzip.html",
-        "theory": "дампинг данных, архивы, проверка целостности, автоматическая проверка восстановления.",
-        "code": "tools/backup.py: дамп → архив с датой → проверка читаемости → отчёт в лог"
-      },
-      "infra": {
-        "topic": "Данные и надёжность: PostgreSQL (роли, дамп/восстановление, транзакции), бэкапы 3-2-1, репликация верхнеуровнево",
-        "source": "https://www.postgresql.org/docs/current/backup-dump.html",
-        "task": "Postgres в compose + своя таблица, pg_dump по расписанию, восстановление в чистую базу и сверка числа строк; записать время восстановления (RTO) в notes"
-      },
-      "question": "Чем бэкап отличается от реплики и почему реплика не заменяет бэкап? Что такое RTO и RPO?",
-      "done_criteria": "коммит за сегодня: скрипт бэкапа + лог успешного восстановления с совпавшим числом строк",
-      "extra": {
-        "task": "Бэкап по-взрослому: pg_dump в файл, восстановление в новую БД, проверка контрольной суммы строк. Плюс расписание бэкапа через systemd-таймер.",
-        "crit": "в labs/day12.md: команды дампа/восстановления и сверка количества строк"
-      }
-    },
-    {
-      "day": 13,
-      "bonus": "securityContext и отдельный serviceAccount для своего пода с правами только на get/list pods",
-      "week": 2,
-      "python": {
-        "topic": "Аудит сервера скриптом: открытые порты, права, устаревшие версии",
-        "source": "https://docs.python.org/3/library/stat.html",
-        "theory": "чтение прав файлов, разбор вывода команд, формирование отчёта-чеклиста.",
-        "code": "tools/audit.py → отчёт: лишние порты, файлы с правами 777, пользователи с sudo"
-      },
-      "infra": {
-        "topic": "Безопасность эксплуатации: SSH и ключи, sudo, fail2ban, nftables, обновления, секреты в репозитории, least privilege в k8s",
-        "source": "https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-using-iptables-on-ubuntu-14-04",
-        "task": "Прогнать аудит: закрыть минимум две находки (например, лишний порт, права файла, секрет в репозитории); описать принцип наименьших привилегий на примере своего пода/пользователя"
-      },
-      "question": "Что ты проверяешь в первую очередь, приходя на незнакомый сервер? Какие три настройки безопасности самые важные?",
-      "done_criteria": "коммит за сегодня: отчёт аудита + две закрытые находки",
-      "extra": {
-        "task": "Аудит своего сервера своим же скриптом: открытые порты, права на файлы, устаревшие пакеты, лишние сервисы. Оформить отчёт и починить одну находку.",
-        "crit": "в labs/day13.md: отчёт аудита + описание исправленной находки и её проверка"
-      }
-    },
-    {
-      "day": 14,
-      "bonus": "SLO 99% и расчёт допустимого простоя/ошибок на 30 дней",
-      "week": 2,
-      "python": {
-        "topic": "Сборка таймлайна инцидента из данных",
-        "source": "https://docs.python.org/3/library/datetime.html",
-        "theory": "работа со временем, сортировка событий, генерация markdown-отчёта.",
-        "code": "tools/timeline.py events.json → markdown-таймлайн 'время — событие — вывод'"
-      },
-      "infra": {
-        "topic": "SRE-практики: SLI/SLO/error budget, дежурства и on-call, severity-модель, учения и постмортем (связка с моей работой инцидент-менеджера)",
-        "source": "https://sre.google/sre-book/service-level-objectives/",
-        "task": "Провести учебный инцидент от начала до конца: имитировать отказ сервиса, снять метрики и логи, провести разбор по таймлайну, написать постмортем (влияние, причина, что меняем, кто отвечает)"
-      },
-      "question": "Как error budget меняет решения о релизах? Кто и зачем пишет постмортем без поиска виноватых?",
-      "done_criteria": "коммит за сегодня: постмортем учебного инцидента с таймлайном и тремя действиями",
-      "extra": {
-        "task": "Провести учение: остановить свой сервис, замерить MTTA/MTTR, собрать таймлайн и написать постмортем по структуре из скилла incident-impact-status.",
-        "crit": "в labs/day13.md и labs/day14.md: таймлайн, MTTA/MTTR в цифрах, постмортем с первопричиной"
-      }
-    },
-    {
-      "day": 15,
-      "bonus": "посчитать, как меняется стоимость при 8 ГБ/40 ГБ и при отказе от ВМ в пользу managed k8s",
-      "week": 3,
-      "python": {
-        "topic": "Инвентарь облака и расчёт стоимости",
-        "source": "https://docs.python.org/3/library/decimal.html",
-        "theory": "модель инфраструктуры как данные, расчёт стоимости, сравнение вариантов.",
-        "code": "tools/cloudcost.py infra.json prices.json → стоимость в месяц по компонентам"
-      },
-      "infra": {
-        "topic": "Облако Cloud.ru изнутри: IaaS/PaaS, ВМ и образы, диски, сети и балансировщики, managed k8s, объектное хранилище, квоты и экономика",
-        "source": "https://cloud.ru/docs",
-        "task": "Нарисовать свою инфраструктуру блок-схемой (diagram.md), сформулировать 10 отличий IaaS/PaaS/SaaS своими словами, выписать, что даёт облако предприятию и какие у этого риски (зависимость, цена, безопасность)"
-      },
-      "question": "Что бы ты вынес в managed-сервис, а что оставил на своей ВМ, если бы экономил бюджет? Почему?",
-      "done_criteria": "коммит за сегодня: diagram.md + 10 отличий + расчёт стоимости своей ВМ на месяц",
-      "extra": {
-        "task": "Инвентарь облака вручную: описать свою ВМ в терминах Cloud.ru (flavor, диск, сеть, образ) и посчитать стоимость трёх вариантов конфигурации.",
-        "crit": "в labs/day15.md: таблица ресурсов ВМ и расчёт стоимости 2 vCPU/4 ГБ против 4 vCPU/8 ГБ"
-      }
-    },
-    {
-      "day": 16,
-      "bonus": "прогнать питч вслух под таймер 3 минуты и записать, что сбилось",
-      "week": 3,
-      "python": {
-        "topic": "Финальная сборка: отчёт о состоянии проекта генерируется скриптом",
-        "source": "https://docs.python.org/3/library/os.html",
-        "theory": "сбор фактов о системе (версии, состояние сервисов, метрики) в один отчёт, README-раздел 'как запустить'.",
-        "code": "tools/report.py → отчёт: версии, состояние подов, метрики, последние коммиты"
-      },
-      "infra": {
-        "topic": "Итог спринта: сквозная демонстрация пайплайна и подготовка питча на стажировку",
-        "source": "https://kubernetes.io/ru/docs/tutorials/",
-        "task": "Прогнать сквозной сценарий: коммит → CI → образ → деплой в k3s → метрики в Grafana. README с архитектурой (схема + почему так). Питч на 3 минуты: что умею, что делал в инцидентах, что готов делать на стажировке. 20 вопросов стажировки DevOps с короткими ответами — в interview-notes.md"
-      },
-      "question": "Расскажи за 3 минуты инженеру: что ты построил за две недели и почему это сделано именно так?",
-      "done_criteria": "коммит за сегодня: README с архитектурной схемой + питч + 20 вопросов с ответами",
-      "extra": {
-        "task": "Собрать питч стажировки: README-обзор репозитория (архитектура, что умеет, CI-статус) + короткая демонстрация сквозного пайплайна.",
-        "crit": "в labs/day16.md: структура питча и вывод финального демо-прогона"
-      }
-    }
-  ]
+  {
+   "day": 2,
+   "bonus": "лог-парсер читает вывод journalctl -o json через subprocess",
+   "week": 1,
+   "python": {
+    "topic": "Разбор логов: топ сообщений и ошибки за сутки",
+    "source": "https://docs.python.org/3/library/collections.html",
+    "theory": "collections.Counter, re, чтение больших файлов построчно, сортировка по частоте.",
+    "code": "tools/logparse.py /var/log/syslog → топ-5 сообщений по частоте и список строк со словом error"
+   },
+   "infra": {
+    "topic": "Linux как продакшн-платформа: процессы и ресурсы, systemd-юниты и таймеры, journald, диагностика (ps, ss, lsof, strace)",
+    "source": "https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html",
+    "task": "Написать systemd-юнит devcheck.service + devcheck.timer, который раз в час кладёт вывод devcheck в /var/log/devcheck.log; проверить systemctl list-timers, journalctl -u, посмотреть ресурсы через ps/top"
+   },
+   "question": "Чем systemd-таймер отличается от cron и почему в проде часто выбирают таймер? Как понять, почему сервис упал: порядок действий?",
+   "done_criteria": "коммит за сегодня: tools/logparse.py + devcheck.service/.timer; systemctl list-timers показывает твой таймер"
+  },
+  {
+   "day": 3,
+   "bonus": "разобрать, что нужно для настоящего сертификата Let's Encrypt (домен, 80-й порт, certbot)",
+   "week": 1,
+   "python": {
+    "topic": "Сетевой чекер: HTTP с таймаутом и повторными попытками",
+    "source": "https://docs.python.org/3/library/urllib.request.html",
+    "theory": "urllib.request, таймауты, коды ответа, измерение времени ответа, повторные попытки с паузой.",
+    "code": "tools/httpcheck.py URL... → код, время в мс, метка ok/fail; повтор 3 раза при ошибке"
+   },
+   "infra": {
+    "topic": "Сеть, DNS, TLS и вход в сервис: nginx как reverse proxy, порты, сертификаты, диагностика dig/curl -v/ss/tcpdump",
+    "source": "https://docs.nginx.com/nginx/admin-guide/web-server/reverse-proxy/",
+    "task": "Поднять на этой ВМ nginx: 443 (TLS, самоподписанный сертификат) → проксирует на локальный сервис; проверить openssl s_client и curl -vk, записать в net-sprint.md цепочку запроса"
+   },
+   "question": "Что происходит по шагам, когда браузер открывает https://site? Где ставится TLS, где балансировка, где приложение?",
+   "done_criteria": "коммит за сегодня: конфиг nginx + сертификат + tools/httpcheck.py, который зелёный на https://localhost",
+   "extra": {
+    "task": "Доказать, что прокси добавляет заголовки: поднять tools/header_echo.py на 8091, направить на него location /echo/ в том же nginx (порт 8443) и снять ответ.",
+    "crit": "в labs/day03.md: вывод `curl -sk https://localhost:8443/echo/ping` с X-Real-IP, X-Forwarded-For, X-Forwarded-Proto + `ss -lntp | grep 8443`"
+   }
+  },
+  {
+   "day": 4,
+   "bonus": "сравнить размер образов python:3.9-slim и python:3.9-alpine и объяснить разницу; разобрать, чем GHCR отличается от локального реестра",
+   "week": 1,
+   "python": {
+    "topic": "Упаковка инструмента: модуль, тесты и разбор требований",
+    "source": "https://docs.pytest.org/en/stable/",
+    "theory": "структура модуля, pytest: assert, фикстуры, параметризация; запуск тестов в контейнере.",
+    "code": "tests/test_devcheck.py — 3 теста на свои функции, запуск pytest и вывод 'N passed'"
+   },
+   "infra": {
+    "topic": "Контейнеры и реестр образов: multi-stage, non-root, healthcheck, теги semver, сканирование уязвимостей",
+    "source": "https://docs.docker.com/build/building/multi-stage/",
+    "task": "Собрать образ devcheck: multi-stage, non-root, HEALTHCHECK, .dockerignore; поднять локальный реестр (registry:2) и запушить тег 0.1.0; проверить состав образа и его размер"
+   },
+   "question": "Чем плох тег latest и как правильно версионировать образы? Что показывает сканер уязвимостей?",
+   "done_criteria": "коммит за сегодня: Dockerfile + проходящие тесты + образ 0.1.0 в локальном реестре (docker images | grep registry)",
+   "extra": {
+    "task": "Собрать образ своего инструмента в двух вариантах (slim и alpine), протегировать semver (1.0.0 и latest), замерить размеры и добавить в CI job сборки образа.",
+    "crit": "в labs/day04.md: таблица размеров двух образов + зелёный CI с шагом сборки"
+   }
+  },
+  {
+   "day": 5,
+   "bonus": "прокатить новую версию образа и откатиться через kubectl rollout undo",
+   "week": 1,
+   "python": {
+    "topic": "Генератор манифестов: Python как источник правды для Kubernetes",
+    "source": "https://docs.python.org/3/library/json.html",
+    "theory": "шаблонизация словаря → YAML/JSON, проверка манифеста kubectl --dry-run=client.",
+    "code": "tools/k8sgen.py --image devcheck:0.1.0 --replicas 2 → k8s/deployment.yaml и k8s/service.yaml"
+   },
+   "infra": {
+    "topic": "Kubernetes: архитектура (control plane, etcd, kubelet, scheduler), k3s на этой ВМ, Deployment/ReplicaSet, rollout и rollback",
+    "source": "https://kubernetes.io/ru/docs/concepts/overview/",
+    "task": "Установить/проверить k3s, разобрать kubectl get/describe/logs/scale, задеплоить свой образ из Dockerfile до 2 реплик, сделать rollout и rollback версии"
+   },
+   "question": "Из каких частей состоит кластер k8s и что произойдёт, если упадёт control plane или один worker? Чем Deployment отличается от Pod?",
+   "done_criteria": "коммит за сегодня: k8s/ манифесты; kubectl get pods показывает 2/2 Running твоего образа",
+   "extra": {
+    "task": "Развернуть в k3s первый pod из своего образа (k3s ctr images import) и посмотреть, что происходит на уровне кластера.",
+    "crit": "в labs/day05.md: `kubectl get nodes,pods -o wide` + `kubectl describe pod`"
+   }
+  },
+  {
+   "day": 6,
+   "bonus": "поставить заведомо неверную readiness-пробу и объяснить поведение кластера",
+   "week": 1,
+   "python": {
+    "topic": "HTTP-сервис на стандартной библиотеке: /health и /metrics",
+    "source": "https://docs.python.org/3/library/http.server.html",
+    "theory": "http.server, маршрутизация по пути, переменные окружения как конфиг, формат метрик Prometheus.",
+    "code": "service/app.py: /health → {'status':'ok'}, /metrics → метрики в формате Prometheus, / → версия и конфиг"
+   },
+   "infra": {
+    "topic": "Сервис, конфиг и секреты в k8s: Service, ConfigMap, Secret, probes, requests/limits, namespace, Ingress",
+    "source": "https://kubernetes.io/docs/concepts/configuration/configmap/",
+    "task": "Выложить сервис с liveness/readiness-probe, конфигом из ConfigMap и паролем из Secret, открыть наружу через Ingress/NodePort; проверить, что pod переживает удаление (kubectl delete pod)"
+   },
+   "question": "Зачем нужны liveness и readiness пробы по отдельности? Что будет, если пробу поставить неверно?",
+   "done_criteria": "коммит за сегодня: манифесты ConfigMap/Secret/Ingress + /health и /metrics отвечают снаружи кластера",
+   "extra": {
+    "task": "Развернуть свой /health-сервис в k3s: Deployment + Service + ConfigMap + Secret, liveness/readiness probes; проверить доступ через NodePort и убить pod.",
+    "crit": "в labs/day06.md: манифесты в repo + вывод `kubectl get pods` до и после `kubectl delete pod`"
+   }
+  },
+  {
+   "day": 7,
+   "bonus": "HPA: настроить автомасштабирование по CPU и посмотреть, как меняется число реплик",
+   "week": 1,
+   "python": {
+    "topic": "Отчёт о состоянии кластера из скрипта",
+    "source": "https://docs.python.org/3/library/subprocess.html",
+    "theory": "subprocess и разбор JSON-вывода kubectl, обработка ошибок и кодов возврата.",
+    "code": "tools/clustercheck.py → сохраняет отчёт: узлы, поды не в Running, рестарты контейнеров"
+   },
+   "infra": {
+    "topic": "Состояние в k8s и разбор сбоев: Volume/PVC, StatefulSet, Job/CronJob, диагностика CrashLoopBackOff, OOMKilled, ImagePullBackOff",
+    "source": "https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
+    "task": "Подключить PVC к своему сервису, сделать CronJob по расписанию; сломать под (несуществующий образ / лишний лимит памяти) и разобрать сбой по describe + logs + events, записать разбор в troubleshooting.md"
+   },
+   "question": "С чего начинаешь разбор упавшего пода в k8s? Какие три команды идут первыми и что каждая показывает?",
+   "done_criteria": "коммит за сегодня: PVC + CronJob + записанный разбор одного реального сбоя",
+   "extra": {
+    "task": "Postgres в k3s с PVC: записать строку, удалить pod, проверить сохранность данных. Плюс Job, который делает дамп таблицы.",
+    "crit": "в labs/day07.md: `kubectl get pvc` + результат select после пересоздания pod"
+   }
+  },
+  {
+   "day": 8,
+   "bonus": "добавить в пайплайн smoke-тест после деплоя, который валит пайплайн при 500-й ошибке",
+   "week": 2,
+   "python": {
+    "topic": "Пайплайн CI/CD как скрипт: стадии, стоп на первой ошибке, отчёт",
+    "source": "https://docs.python.org/3/library/subprocess.html",
+    "theory": "стадии пайплайна, коды возврата, остановка на ошибке, логирование шагов.",
+    "code": "scripts/ci.py: lint → test → build → push → deploy, остановка на первой красной стадии"
+   },
+   "infra": {
+    "topic": "CI/CD: GitHub Actions (jobs, steps, secrets, cache), локальный прогон пайплайна в Docker, деплой в k3s, откат",
+    "source": "https://docs.github.com/en/actions/get-started/quickstart",
+    "task": "Пайплайн в GitHub Actions: lint → test → build → push образа в GHCR → деплой на ВМ (self-hosted runner или SSH-ключ); секреты, кэш и условия в workflow; тот же путь — локально через scripts/ci.py; проверить откат при падении стадии"
+   },
+   "question": "Какие стадии обязаны быть в пайплайне перед продом? Что такое 'сборка один раз, деплой везде' и зачем это правило?",
+   "done_criteria": "коммит за сегодня: .github/workflows/ci.yml + scripts/ci.py; Actions зелёный и заканчивается новой версией в k3s",
+   "extra": {
+    "task": "Довести workflow: matrix по версиям Python, кэш pip, сборка образа и upload-artifact; сознательно сломать тест и увидеть красный CI.",
+    "crit": "в labs/day08.md: ссылка на красный и зелёный прогон + вывод `gh run list`"
+   }
+  },
+  {
+   "day": 9,
+   "bonus": "правило алерта 'сервис недоступен 2 минуты' и проверка его срабатывания",
+   "week": 2,
+   "python": {
+    "topic": "Свой экспортёр метрик для сервиса",
+    "source": "https://prometheus.io/docs/instrumenting/exposition_formats/",
+    "theory": "типы метрик (counter, gauge, histogram), формат exposition, вычисление перцентилей.",
+    "code": "в сервисе: счётчик запросов, время ответа, счётчик ошибок — и /metrics их отдаёт"
+   },
+   "infra": {
+    "topic": "Мониторинг: Prometheus, node-exporter, PromQL, RED/USE, дашборд Grafana, правило алерта",
+    "source": "https://prometheus.io/docs/introduction/overview/",
+    "task": "Поднять в compose Prometheus + node-exporter + Grafana, настроить сбор метрик своего сервиса и ВМ; сделать дашборд на 6 панелей; написать запрос rate() и histogram_quantile()"
+   },
+   "question": "Чем SLI отличается от SLO и от метрики? Какие метрики ты бы поставил на сервис в первый день?",
+   "done_criteria": "коммит за сегодня: compose-файл мониторинга + dashboard.json; в Grafana видны метрики сервиса и ВМ",
+   "extra": {
+    "task": "Поднять в compose Prometheus + свой экспортёр /metrics (из дня 9) и node-exporter; написать 3 запроса PromQL и правило алерта.",
+    "crit": "в labs/day09.md: три PromQL-запроса с выводом и правило алерта в prometheus.yml"
+   }
+  },
+  {
+   "day": 10,
+   "bonus": "постмортем по учебному инциденту: таймлайн, причина, что меняем",
+   "week": 2,
+   "python": {
+    "topic": "Алертер с антидребезгом: порог держится N минут — шлём один раз",
+    "source": "https://docs.python.org/3/library/smtplib.html",
+    "theory": "состояние между запусками (файл), окно подавления, дедупликация, отправка в мессенджер.",
+    "code": "tools/alerter.py: читает цель, держит состояние в JSON, шлёт уведомление один раз на инцидент"
+   },
+   "infra": {
+    "topic": "Логи, алерты и инцидент: сбор логов (Loki/promtail или journald), структурированные логи, Alertmanager → Telegram, разбор по логам",
+    "source": "https://grafana.com/docs/loki/latest/",
+    "task": "Собрать логи сервиса в одном месте, настроить маршрут алерта в Telegram, убить сервис и разобрать инцидент по логам; результат — runbook на одну страницу (симптом → проверки → действия)"
+   },
+   "question": "Как по логам отличить проблему приложения от проблемы инфраструктуры? Какие поля обязаны быть в структурированном логе?",
+   "done_criteria": "коммит за сегодня: runbook.md + сработавший алерт, зафиксированный в notes",
+   "extra": {
+    "task": "Сделать алертинг до конца: свой скрипт читает лог, считает ошибки за 5 минут и отправляет сообщение в твой Telegram-бот при превышении порога.",
+    "crit": "в labs/day10.md: скрин/лог сработавшего уведомления и текст порога"
+   }
+  },
+  {
+   "day": 11,
+   "bonus": "секреты в Ansible: ansible-vault encrypt строки",
+   "week": 2,
+   "python": {
+    "topic": "Инвентарь из данных: генерация конфигов и проверка идемпотентности",
+    "source": "https://docs.python.org/3/library/string.html",
+    "theory": "данные → конфиг (словарь + шаблон), проверка 'ничего не изменилось' повторным прогоном.",
+    "code": "tools/inventory.py hosts.yml → inventory.ini + diff с предыдущей версией"
+   },
+   "infra": {
+    "topic": "Инфраструктура как код: Ansible (инвентарь, playbook, роли, идемпотентность), Terraform верхнеуровнево (state, plan, apply)",
+    "source": "https://docs.ansible.com/ansible/latest/getting_started/index.html",
+    "task": "Playbook, который настраивает эту ВМ (пакеты + nginx + пользователь): первый прогон changed>0, второй прогон changed=0; записать в iac-notes.md разницу Ansible и Terraform"
+   },
+   "question": "Что такое идемпотентность и почему без неё IaC бесполезен? Где место Ansible, а где Terraform?",
+   "done_criteria": "коммит за сегодня: playbook + вывод второго прогона с changed=0",
+   "extra": {
+    "task": "Ansible на localhost: playbook, который идемпотентно настраивает nginx (пакет, конфиг, сервис). Прогнать дважды и показать разницу changed.",
+    "crit": "в labs/day11.md: вывод двух прогонов (changed=3 → changed=0)"
+   }
+  },
+  {
+   "day": 12,
+   "bonus": "автопроверка: restore в временную базу + count + алерт при расхождении",
+   "week": 2,
+   "python": {
+    "topic": "Бэкап и проверка восстановления скриптом",
+    "source": "https://docs.python.org/3/library/gzip.html",
+    "theory": "дампинг данных, архивы, проверка целостности, автоматическая проверка восстановления.",
+    "code": "tools/backup.py: дамп → архив с датой → проверка читаемости → отчёт в лог"
+   },
+   "infra": {
+    "topic": "Данные и надёжность: PostgreSQL (роли, дамп/восстановление, транзакции), бэкапы 3-2-1, репликация верхнеуровнево",
+    "source": "https://www.postgresql.org/docs/current/backup-dump.html",
+    "task": "Postgres в compose + своя таблица, pg_dump по расписанию, восстановление в чистую базу и сверка числа строк; записать время восстановления (RTO) в notes"
+   },
+   "question": "Чем бэкап отличается от реплики и почему реплика не заменяет бэкап? Что такое RTO и RPO?",
+   "done_criteria": "коммит за сегодня: скрипт бэкапа + лог успешного восстановления с совпавшим числом строк",
+   "extra": {
+    "task": "Бэкап по-взрослому: pg_dump в файл, восстановление в новую БД, проверка контрольной суммы строк. Плюс расписание бэкапа через systemd-таймер.",
+    "crit": "в labs/day12.md: команды дампа/восстановления и сверка количества строк"
+   }
+  },
+  {
+   "day": 13,
+   "bonus": "securityContext и отдельный serviceAccount для своего пода с правами только на get/list pods",
+   "week": 2,
+   "python": {
+    "topic": "Аудит сервера скриптом: открытые порты, права, устаревшие версии",
+    "source": "https://docs.python.org/3/library/stat.html",
+    "theory": "чтение прав файлов, разбор вывода команд, формирование отчёта-чеклиста.",
+    "code": "tools/audit.py → отчёт: лишние порты, файлы с правами 777, пользователи с sudo"
+   },
+   "infra": {
+    "topic": "Безопасность эксплуатации: SSH и ключи, sudo, fail2ban, nftables, обновления, секреты в репозитории, least privilege в k8s",
+    "source": "https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-using-iptables-on-ubuntu-14-04",
+    "task": "Прогнать аудит: закрыть минимум две находки (например, лишний порт, права файла, секрет в репозитории); описать принцип наименьших привилегий на примере своего пода/пользователя"
+   },
+   "question": "Что ты проверяешь в первую очередь, приходя на незнакомый сервер? Какие три настройки безопасности самые важные?",
+   "done_criteria": "коммит за сегодня: отчёт аудита + две закрытые находки",
+   "extra": {
+    "task": "Аудит своего сервера своим же скриптом: открытые порты, права на файлы, устаревшие пакеты, лишние сервисы. Оформить отчёт и починить одну находку.",
+    "crit": "в labs/day13.md: отчёт аудита + описание исправленной находки и её проверка"
+   }
+  },
+  {
+   "day": 14,
+   "bonus": "SLO 99% и расчёт допустимого простоя/ошибок на 30 дней",
+   "week": 2,
+   "python": {
+    "topic": "Сборка таймлайна инцидента из данных",
+    "source": "https://docs.python.org/3/library/datetime.html",
+    "theory": "работа со временем, сортировка событий, генерация markdown-отчёта.",
+    "code": "tools/timeline.py events.json → markdown-таймлайн 'время — событие — вывод'"
+   },
+   "infra": {
+    "topic": "SRE-практики: SLI/SLO/error budget, дежурства и on-call, severity-модель, учения и постмортем (связка с моей работой инцидент-менеджера)",
+    "source": "https://sre.google/sre-book/service-level-objectives/",
+    "task": "Провести учебный инцидент от начала до конца: имитировать отказ сервиса, снять метрики и логи, провести разбор по таймлайну, написать постмортем (влияние, причина, что меняем, кто отвечает)"
+   },
+   "question": "Как error budget меняет решения о релизах? Кто и зачем пишет постмортем без поиска виноватых?",
+   "done_criteria": "коммит за сегодня: постмортем учебного инцидента с таймлайном и тремя действиями",
+   "extra": {
+    "task": "Провести учение: остановить свой сервис, замерить MTTA/MTTR, собрать таймлайн и написать постмортем по структуре из скилла incident-impact-status.",
+    "crit": "в labs/day13.md и labs/day14.md: таймлайн, MTTA/MTTR в цифрах, постмортем с первопричиной"
+   }
+  },
+  {
+   "day": 15,
+   "bonus": "посчитать, как меняется стоимость при 8 ГБ/40 ГБ и при отказе от ВМ в пользу managed k8s",
+   "week": 3,
+   "python": {
+    "topic": "Инвентарь облака и расчёт стоимости",
+    "source": "https://docs.python.org/3/library/decimal.html",
+    "theory": "модель инфраструктуры как данные, расчёт стоимости, сравнение вариантов.",
+    "code": "tools/cloudcost.py infra.json prices.json → стоимость в месяц по компонентам"
+   },
+   "infra": {
+    "topic": "Облако Cloud.ru изнутри: IaaS/PaaS, ВМ и образы, диски, сети и балансировщики, managed k8s, объектное хранилище, квоты и экономика",
+    "source": "https://cloud.ru/docs",
+    "task": "Нарисовать свою инфраструктуру блок-схемой (diagram.md), сформулировать 10 отличий IaaS/PaaS/SaaS своими словами, выписать, что даёт облако предприятию и какие у этого риски (зависимость, цена, безопасность)"
+   },
+   "question": "Что бы ты вынес в managed-сервис, а что оставил на своей ВМ, если бы экономил бюджет? Почему?",
+   "done_criteria": "коммит за сегодня: diagram.md + 10 отличий + расчёт стоимости своей ВМ на месяц",
+   "extra": {
+    "task": "Инвентарь облака вручную: описать свою ВМ в терминах Cloud.ru (flavor, диск, сеть, образ) и посчитать стоимость трёх вариантов конфигурации.",
+    "crit": "в labs/day15.md: таблица ресурсов ВМ и расчёт стоимости 2 vCPU/4 ГБ против 4 vCPU/8 ГБ"
+   }
+  },
+  {
+   "day": 16,
+   "bonus": "прогнать питч вслух под таймер 3 минуты и записать, что сбилось",
+   "week": 3,
+   "python": {
+    "topic": "Финальная сборка: отчёт о состоянии проекта генерируется скриптом",
+    "source": "https://docs.python.org/3/library/os.html",
+    "theory": "сбор фактов о системе (версии, состояние сервисов, метрики) в один отчёт, README-раздел 'как запустить'.",
+    "code": "tools/report.py → отчёт: версии, состояние подов, метрики, последние коммиты"
+   },
+   "infra": {
+    "topic": "Итог спринта: сквозная демонстрация пайплайна и подготовка питча на стажировку",
+    "source": "https://kubernetes.io/ru/docs/tutorials/",
+    "task": "Прогнать сквозной сценарий: коммит → CI → образ → деплой в k3s → метрики в Grafana. README с архитектурой (схема + почему так). Питч на 3 минуты: что умею, что делал в инцидентах, что готов делать на стажировке. 20 вопросов стажировки DevOps с короткими ответами — в interview-notes.md"
+   },
+   "question": "Расскажи за 3 минуты инженеру: что ты построил за две недели и почему это сделано именно так?",
+   "done_criteria": "коммит за сегодня: README с архитектурной схемой + питч + 20 вопросов с ответами",
+   "extra": {
+    "task": "Собрать питч стажировки: README-обзор репозитория (архитектура, что умеет, CI-статус) + короткая демонстрация сквозного пайплайна.",
+    "crit": "в labs/day16.md: структура питча и вывод финального демо-прогона"
+   }
+  }
+ ]
 }

@@ -6,7 +6,12 @@ import json, os
 ROOT = os.path.dirname(os.path.abspath(__file__))
 plan = json.load(open(os.path.join(ROOT, "plan.json"), encoding="utf-8"))
 
-L = ["# DevOps-спринт: подготовка к стажировке (16 дней, 3–19 октября 2026)",
+def _dm(iso):  # 2026-10-21 → «21.10»
+    return "%s.%s" % (iso[8:10], iso[5:7])
+
+
+L = ["# DevOps-спринт: подготовка к стажировке (%d дней, %s–%s %s)" % (
+        len(plan["days"]), _dm(plan["start_date"]), _dm(plan["end_date"]), plan["end_date"][:4]),
      "",
      "**%d минут в день** — %d автоматизация на Python + %d инфраструктура/DevOps + %d конспект и разбор."
      % (plan["minutes_total"], plan["minutes_split"]["python"], plan["minutes_split"]["infra"],
