@@ -186,6 +186,25 @@ def days_missed(st):
     return max(0, delta - 1 if st.get("last_credited") else delta)
 
 
+def credited(hist):
+    """Зачётные записи: перенос дня (shift) зачётом не считается."""
+    return [h for h in (hist or []) if h.get("status") in ("done", "mini", "intro")]
+
+
+def credit_shift(st):
+    """Перенос дня: сегодня не занимаемся (инцидент/загрузка).
+    День в очереди не продвигается, серия не рвётся, зачёт не начисляется."""
+    t = today_str()
+    if st.get("last_credited") == t:
+        return False
+    st["last_credited"] = t
+    st["shifts"] = (st.get("shifts") or [])[-180:] + [t]
+    st["history"] = (st.get("history") or [])[-180:] + [
+        {"date": t, "day": st.get("current_day", 1), "status": "shift"}]
+    save_state(st)
+    return True
+
+
 def credit(st, status="done"):
     t = today_str()
     if st.get("last_credited") == t:
@@ -295,6 +314,18 @@ def _check_body(plan, st):
     hist = st.get("history") or []
     was_intro = (hist[-1].get("status") == "intro") if hist else False
     if st.get("last_credited") == today_str():
+        if hist and hist[-1].get("status") == "shift" and n == 0:
+            return ("🔎 Проверка дня. Сегодня день перенесён ⏸ (перенос зафиксирован)\n"
+                    "Серия сохранена: %s. Завтра утром — день %d: %s" % (
+                        plural(st.get("streak", 0)), st.get("current_day", 1), theme_of(d)))
+        if hist and hist[-1].get("status") == "shift" and n > 0:
+            st["last_credited"] = None      # поработал всё-таки — закрываем день по-настоящему
+            credit(st, "done")
+            return ("🔎 Проверка дня. Коммитов за сегодня: %d (последний в %s) ✅\n"
+                    "День %d зачтён (перенос снят). Серия: %s (рекорд: %s).\nЗавтра: день %d — %s." % (
+                        n, t or "—", st.get("current_day", 1) - 1, plural(st.get("streak", 0)),
+                        plural(st.get("best_streak", 0)), st.get("current_day", 1),
+                        theme_of(day_entry(plan, st.get("current_day", 1)))))
         if was_intro:
             return ("🔎 Проверка дня. Вводное занятие зачтено ✅ (коммитов за сегодня: %d)\n"
                     "Серия: %s (рекорд: %s). Завтра утром — день 1: %s." % (
@@ -360,10 +391,10 @@ def check(plan, st):
 def status(plan, st):
     hist = st.get("history") or []
     last7 = [h for h in hist if h["date"] >= (date.today() - timedelta(days=7)).isoformat()]
-    return ("📊 Состояние: день %d из %d, серия %s, рекорд %s\nЗачётов за 7 дней: %d\nПоследние зачёты: %s\n"
+    return ("📊 Состояние: день %d из %d, серия %s, рекорд %s\nЗачётов за 7 дней: %d\nПоследние отметки: %s\n"
             "Мини-дней всего: %d\nТекущая тема: %s" % (
                 st.get("current_day", 1), len(plan["days"]), plural(st.get("streak", 0)),
-                plural(st.get("best_streak", 0)), len(last7),
+                plural(st.get("best_streak", 0)), len(credited(last7)),
                 ", ".join("%s(%s)" % (h["date"][5:], h["status"]) for h in hist[-5:]) or "нет",
                 st.get("mini_count", 0), theme_of(day_entry(plan, st.get("current_day", 1)))))
 
@@ -375,13 +406,14 @@ def weekly(plan, st):
              "дата: %s" % today_str(),
              "текущий день плана: %d из %d" % (st.get("current_day", 1), len(plan["days"])),
              "серия: %d, рекорд: %d, мини-дней: %d" % (st.get("streak", 0), st.get("best_streak", 0), st.get("mini_count", 0)),
-             "зачётов за 7 дней: %d из 7" % len(last7),
-             "даты зачётов: %s" % (", ".join(h["date"] for h in last7) or "нет"),
+             "зачётов за 7 дней: %d из 7" % len(credited(last7)),
+             "даты зачётов: %s" % (", ".join(h["date"] for h in credited(last7)) or "нет"),
+             "переносов дня: %d" % len(st.get("shifts") or []),
              "следующий день: %s" % theme_of(day_entry(plan, st.get("current_day", 1))),
-             "последние зачёты: %s" % (", ".join("%s(%s)" % (h["date"], h["status"]) for h in hist[-7:]) or "нет"),
-             "всего зачётов: %d" % len(hist),
+             "последние отметки: %s" % (", ".join("%s(%s)" % (h["date"], h["status"]) for h in hist[-7:]) or "нет"),
+             "всего зачётов: %d" % len(credited(hist)),
              "блок расширения за 7 дней: %d (гейт: 6 из 7 — тогда расширение становится обязательным)" % extra_week_count(st)]
-    if len(last7) < 4:
+    if len(credited(last7)) < 4:
         lines.append("ВЫВОД: менее 4 зачётов за неделю — нагрузка не держится, надо упростить план (15 минут/день, только одна дорожка).")
     return "\n".join(lines)
 
@@ -445,10 +477,19 @@ def main():
         save_state(st)
         print("✅ Вводное занятие зачтено. Серия: %s. Завтра утром — день 1: %s" % (
             plural(st["streak"]), theme_of(day_entry(plan, 1))) if ok else "Сегодня уже зачтено.")
+    elif mode in ("shift", "перенос"):
+        ok = credit_shift(st)
+        print(("⏸ День %d перенесён: сегодня не занимаемся, день не сгорел — он остаётся первым в очереди.\n"
+               "Серия сохранена: %s. Завтра утром — день %d: %s" % (
+                   st.get("current_day", 1), plural(st.get("streak", 0)), st.get("current_day", 1),
+                   theme_of(day_entry(plan, st.get("current_day", 1)))))
+              if ok else "Сегодня уже отмечено (зачёт или перенос).")
     elif mode == "mini":
         ok = credit(st, "mini")
         print("🛟 Мини-день зачтён (15 минут, серия: %s). День %d не продвинулся — вернёшься к нему завтра." % (
-            plural(st["streak"]), st.get("current_day", 1)) if ok else "Сегодня уже зачтено.")
+            plural(st["streak"]), st.get("current_day", 1)) if ok
+              else ("Сегодня день перенесён — зачёт не нужен." if (st.get("history") or [{}])[-1].get("status") == "shift"
+                    else "Сегодня уже зачтено."))
     elif mode == "drill":
         day = int(sys.argv[2]) if len(sys.argv) > 2 else st.get("current_day", 1)
         dr = load_drill(day)
@@ -483,7 +524,7 @@ def main():
     elif mode in ("finish", "итог"):
         print(finish(plan, st))
     else:
-        print("Режимы: brief | ping | check | done | mini | drill | status | weekly | finish")
+        print("Режимы: brief | ping | check | done | mini | shift | drill | status | weekly | finish")
 
 
 if __name__ == "__main__":
