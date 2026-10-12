@@ -1,36 +1,47 @@
-# День 6 — подробное задание (11.10.2026): HTTP-сервис на stdlib + конфиг/секреты в k8s
+# День 6 — подробное задание (12.10.2026): HTTP-сервис на stdlib + конфиг/секреты/пробы в k3s
 
-Общая раскладка: **150 мин ядро** = Python 60 + инфраструктура 60 + конспект 30. Блок расширения 60 мин —
-сегодня добровольный (гейт не пройден), но по теме совпадает с задачей дня.
+Состояние на старт: день 6 в очереди (переносился 10.10 и 11.10), серия 25, дедлайн 22.10.
+В репозитории по дню 6 пока **ничего нет**: нет `service/`, нет `practice/s06.py`, нет `labs/day06.md`.
+В k3s живёт вчерашний `devcheck` (образ `echo-svc:0.1.0`, 2 реплики) — его не ломаем, делаем рядом новое имя.
+
+Раскладка: **ядро 150 мин** = Python 60 + инфраструктура 60 + конспект 30. Расширение 60 мин — добровольное (гейт не пройден).
+
+Рабочая папка везде: `/home/rafael/devops-sprint`
 
 ---
-# ЧАСТЬ 1. PYTHON (60 мин)
 
-## 1.1 Теория (15 мин)
+# ПОСЛЕДОВАТЕЛЬНОСТЬ ДЕЙСТВИЙ
+
+## Шаг 0. Проверка стартового состояния (3 мин)
+
+```bash
+cd /home/rafael/devops-sprint
+git pull                      # убедиться, что локально последняя версия
+sudo k3s kubectl get pods -o wide      # должно быть 2 пода devcheck в Running
+sudo k3s ctr images ls -q | grep -Ei 'echo-svc|python'   # какие образы видит k3s
+docker images | head -5       # если «permission denied» — команды docker через: sg docker -c '...'
+```
+
+Ожидаемо: 2 пода `devcheck` в Running, в k3s есть `echo-svc:0.1.0`. Если кластер лежит — `sudo systemctl status k3s`.
+
+---
+
+## ЧАСТЬ 1. PYTHON (60 мин)
+
+### 1.1 Теория (15 мин) — прочитать, не конспектировать
 
 📚 https://docs.python.org/3/library/http.server.html
 
-1. **`http.server`** — сервер в стандартной библиотеке: `HTTPServer` (по одному запросу за раз) и
-   `ThreadingHTTPServer` (поток на запрос). Он даёт готовый HTTP-парсер, а логику маршрутов пишем сами.
-2. **`BaseHTTPRequestHandler`** — класс, который вызывается на каждый запрос. Свой метод `do_GET(self)`
-   отвечает на GET. Путь запроса — `self.path` (включая query-строку: `/metrics?x=1`).
-3. **Роутинг руками** — разводим ветки по `self.path`: `if self.path == "/health": ... elif ... else: 404`.
-   Никаких фреймворков: смысл дня — увидеть, что фреймворк делает за нас.
-4. **Ответ** — три шага: `self.send_response(200)`, `self.send_header("Content-Type", "application/json")`,
-   `self.end_headers()`, затем `self.wfile.write(body.encode("utf-8"))`. Заголовок `Content-Length` лучше
-   ставить явно — тогда curl и браузер не подвисают.
-5. **`self.server.metrics`** — счётчики удобно держать на объекте сервера, а не в глобальной переменной:
-   так их видит каждый обработчик и видно, что метрики живут дольше одного запроса.
-6. **Конфиг через окружение** — `os.environ.get("APP_PORT", "8080")`: один и тот же код, разные среды.
-   Дефолты обязательны, иначе сервис упадёт там, где переменной нет.
-7. **Формат метрик Prometheus** — построчный текст: `имя значение` и `имя{метка="значение"} значение`,
-   плюс строки `# HELP` и `# TYPE`. Content-Type: `text/plain; version=0.0.4`.
-8. **Почему `/health` делают «дешёвым»** — никаких внешних вызовов и БД: иначе проба в k8s начнёт падать
-   вместе с зависимостью и Kubernetes будет перезапускать здоровый под по кругу.
+1. **`http.server`** — HTTP-сервер в стандартной библиотеке: `HTTPServer` (по одному запросу за раз) и `ThreadingHTTPServer` (поток на запрос). Парсинг HTTP готовый, маршруты пишем сами.
+2. **`BaseHTTPRequestHandler`** — обрабатывает один запрос; метод `do_GET(self)` отвечает на GET; путь лежит в `self.path` (вместе с query-строкой).
+3. **Роутинг руками** — ветки по `self.path`: `/health`, `/metrics`, `/`, `else → 404`. Смысл дня — увидеть, что фреймворк делает за нас.
+4. **Ответ из трёх шагов** — `send_response(200)` → `send_header("Content-Type", ...)` → `end_headers()` → `wfile.write(body.encode("utf-8"))`. `Content-Length` ставим явно, иначе curl подвисает.
+5. **Счётчики на объекте сервера** (`self.server.requests`), а не в глобальной переменной — так метрики живут дольше одного запроса и видны всем обработчикам.
+6. **Конфиг через окружение** — `os.environ.get("APP_PORT", "8080")`. Дефолт обязателен, иначе сервис упадёт там, где переменной нет.
+7. **Формат метрик Prometheus** — построчный текст: `имя значение` и `имя{метка="значение"} значение` + строки `# HELP`/`# TYPE`. Content-Type: `text/plain; version=0.0.4`.
+8. **Почему `/health` делают «дешёвым»** — без внешних вызовов и БД: иначе проба падает вместе с зависимостью, и k8s перезапускает полностью здоровый под.
 
-## 1.2 Код — `service/app.py` (30 мин)
-
-Файл создаём в репозитории: `~/devops-sprint/service/app.py` (папка `service/` новая).
+### 1.2 Код — `service/app.py` (30 мин)
 
 ```bash
 cd /home/rafael/devops-sprint
@@ -38,178 +49,160 @@ mkdir -p service
 nano service/app.py
 ```
 
-Каркас (детали дописываешь сам — это ядро дня, не копипаст):
+Требования к сервису (детали дописываешь сам):
 
-```python
-import json
-import os
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+- `PORT` из `APP_PORT` (дефолт 8080), `VERSION` из `APP_VERSION`, `ENV_NAME` из `APP_ENV`, `SECRET` из `APP_SECRET` (дефолт `none`)
+- `GET /health` → `{"status":"ok"}` — ничего внешнего не трогает
+- `GET /metrics` → Prometheus-текст: `app_requests_total` (счётчик), `app_info{version="...",env="..."} 1`, `app_uptime_seconds`
+- `GET /` → версия, окружение, порт (пароль в вывод **не** отдаём)
+- любой другой путь → 404
+- сервер слушает **`0.0.0.0`** (не `127.0.0.1` — иначе из пода не достучаться)
 
-PORT = int(os.environ.get("APP_PORT", "8080"))
-VERSION = os.environ.get("APP_VERSION", "0.1.0")
-ENV_NAME = os.environ.get("APP_ENV", "local")
-
-
-class Handler(BaseHTTPRequestHandler):
-    def _send(self, code, body, ctype="application/json"):
-        data = body.encode("utf-8")
-        self.send_response(code)
-        self.send_header("Content-Type", ctype)
-        self.send_header("Content-Length", str(len(data)))
-        self.end_headers()
-        self.wfile.write(data)
-
-    def do_GET(self):
-        self.server.requests += 1
-        if self.path == "/health":
-            self._send(200, json.dumps({"status": "ok"}))
-        elif self.path == "/metrics":
-            # счётчик + info-метрика с версией (метка в фигурных скобках)
-            ...
-        elif self.path == "/":
-            self._send(200, json.dumps({"version": VERSION, "env": ENV_NAME, "port": PORT}))
-        else:
-            self._send(404, json.dumps({"error": "not found"}))
-
-
-if __name__ == "__main__":
-    server = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)   # 0.0.0.0, не 127.0.0.1!
-    server.requests = 0
-    print("listening on %s" % PORT)
-    server.serve_forever()
-```
-
-⚠️ **Два грабля из прошлых дней:** слушать `0.0.0.0` (иначе из пода сервис недоступен), и не занимать
-порты 80/443/8090 (Traefik/nginx/gpt2giga). Для локальной проверки 8080 свободен.
-
-Проверка (сервер молчит в консоли — это нормально, он слушает):
+Локальная проверка:
 
 ```bash
+cd /home/rafael/devops-sprint
 python3 service/app.py &
-curl -s localhost:8080/health            # → {"status": "ok"}
-curl -s localhost:8080/metrics | head -5 # строки метрик с # HELP/# TYPE и счётчиком
-curl -s localhost:8080/                   # → версия, env, порт
-curl -s -o /dev/null -w '%{http_code}
-' localhost:8080/nope   # → 404
+curl -s localhost:8080/health                  # {"status": "ok"}
+curl -s localhost:8080/metrics | head -5       # # HELP / # TYPE / счётчик
+curl -s localhost:8080/                        # версия, env, порт
+curl -s -o /dev/null -w '%{http_code}\n' localhost:8080/nope   # 404
 kill %1
 ```
 
-Если `Connection refused` — сервер не поднялся (смотрите трейс), если `404` на `/health` — опечатка в пути.
+### 1.3 Образ для кластера (10 мин, внутри блока инфры)
 
-## 1.3 Практика руками — `practice/s06.py` (15 мин)
+k3s (containerd) не видит docker-образы напрямую. Создать `service/Dockerfile`:
 
-Задание: `parse_env(text)` → словарь `KEY=VALUE` из строк, игнорируя пустые строки и комментарии с `#`.
-Ожидаемо: `parse_env('A=1\n# ком\nB=2')` → `{'A': '1', 'B': '2'}`.
+```dockerfile
+FROM python:3.11-slim
+WORKDIR /app
+COPY app.py .
+ENV APP_PORT=8080
+EXPOSE 8080
+HEALTHCHECK CMD python -c "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8080/health')" || exit 1
+CMD ["python", "app.py"]
+```
 
-Три подсказки: `text.splitlines()`, `line.strip()`, `line.split("=", 1)` (именно `1` — иначе значения со знаком
-«равно» внутри порежутся). Комментарий отличается от пустой строки: начинается с `#` после `strip()`.
+Сборка и импорт в k3s (образ `python:3.11-slim` уже есть локально, интернет образу не нужен):
+
+```bash
+cd /home/rafael/devops-sprint/service
+sg docker -c 'docker build -t app:0.1.0 .'          # если docker работает и без sg — просто docker build
+sg docker -c 'docker save app:0.1.0 -o /tmp/app.tar'
+sudo k3s ctr images import /tmp/app.tar
+sudo k3s ctr images ls -q | grep app:0.1.0           # видим образ в k3s
+```
+
+### 1.4 Практика руками — `practice/s06.py` (15 мин)
+
+`parse_env(text)` → словарь `KEY=VALUE`, игнорируя пустые строки и комментарии с `#`.
+Ожидаемо: `parse_env('A=1\n# ком\nB=2')` → `{'A': '1', 'B': '2'}`
+
+Подсказки: `text.splitlines()`, `line.strip()`, `line.split("=", 1)` (именно `1`), отсев строк, начинающихся с `#`.
 
 ```bash
 nano practice/s06.py
 python3 practice/s06.py
-python3 today.py drill 6      # эталон — сверять ПОСЛЕ своей попытки
+python3 today.py drill 6        # эталон — только ПОСЛЕ своей попытки
 ```
 
 ---
-# ЧАСТЬ 2. ИНФРАСТРУКТУРА (60 мин)
 
-## 2.1 Теория (15 мин)
+## ЧАСТЬ 2. ИНФРАСТРУКТУРА (60 мин)
+
+### 2.1 Теория (15 мин)
 
 📚 https://kubernetes.io/docs/concepts/configuration/configmap/
 
-1. **Namespace** — логическая изоляция объектов внутри кластера (имена уникальны внутри namespace).
-2. **Service** — стабильное имя и балансировка на поды, которые живут и умирают.
-   `ClusterIP` — только внутри кластера, `NodePort` — порт на каждой ноде (30000–32767),
-   `LoadBalancer` — внешний балансировщик.
-3. **ConfigMap** — несекретный конфиг (ключ→значение, целиком файл или env). **Secret** — то же, но для
-   секретов; хранится в base64, поэтому это не шифрование, а отдельный тип объекта с другим доступом.
-4. **Подключение** — `envFrom.configMapRef` / `envFrom.secretRef` (все ключи как переменные) либо
-   `env.valueFrom` (точечно). Так конфиг не вшивается в образ.
-5. **requests / limits** — гарантия и потолок ресурсов. Превышение memory-limit → контейнер убивается (OOMKilled).
-6. **livenessProbe** — «процесс жив?»: при падении kubelet перезапускает контейнер.
-   **readinessProbe** — «готов принимать трафик?»: при падении под исключается из Service, но не перезапускается.
-   Отсюда ответ на вопрос дня: неверная liveness = бесконечные рестарты, неверная readiness = пустой Service
-   без трафика при живых подах.
-7. **Ingress** — HTTP-правила снаружи (в k3s из коробки Traefik на 443). Нам сегодня проще NodePort.
+1. **Namespace** — изоляция объектов внутри кластера; имена уникальны только внутри него.
+2. **Service** — стабильное имя + балансировка на поды, которые живут и умирают. `ClusterIP` — только внутри, `NodePort` — порт на каждой ноде (30000–32767), `LoadBalancer` — внешний балансировщик.
+3. **ConfigMap** — несекретный конфиг. **Secret** — то же для секретов; лежит в base64, то есть это **не шифрование**, а отдельный объект с другим доступом и правами.
+4. **Как подключить** — `envFrom.configMapRef` / `envFrom.secretRef` (все ключи переменными) или точечно `env.valueFrom`. Конфиг не вшивается в образ.
+5. **requests / limits** — гарантия и потолок. Превышение memory-limit → `OOMKilled`.
+6. **livenessProbe** — «процесс жив?»: падение → kubelet перезапускает контейнер. **readinessProbe** — «готов принимать трафик?»: падение → под убирается из Service, но **не** перезапускается.
+7. **Ingress** — HTTP-правила снаружи; в k3s из коробки Traefik на 443. Сегодня проще и нагляднее NodePort.
 
-## 2.2 Задача (30 мин) — выложить сервис в k3s
-
-Работаем в `~/devops-sprint/k8s/`. Шесть шагов.
-
-**Шаг 1. Образ в кластере.** k3s (containerd) не видит образы docker напрямую:
-
-```bash
-docker images | grep -E 'echo-svc|devcheck'         # что есть у docker
-sudo k3s ctr images ls | grep echo-svc              # что уже видит k3s
-# если нужного нет — сохранить docker-образ и импортировать:
-docker save echo-svc:0.1.0 -o /tmp/echo.tar
-sudo k3s ctr images import /tmp/echo.tar
-```
-
-**Шаг 2. ConfigMap и Secret** (можно императивно — быстрее для проверки):
-
-```bash
-sudo k3s kubectl create configmap app-config --from-literal=APP_VERSION=0.1.0 --from-literal=APP_ENV=k3s
-sudo k3s kubectl create secret generic app-secret --from-literal=DB_PASSWORD='s3cret'
-sudo k3s kubectl get configmap app-config -o yaml | head -20
-```
-
-**Шаг 3. Deployment** — `k8s/app-deployment.yaml`: `replicas: 2`, контейнер с образом из шага 1,
-порт 8080, `envFrom` на ConfigMap и Secret, `resources.requests/limits`, обе пробы `httpGet` на `/health`
-(порт 8080, `initialDelaySeconds: 3`, `periodSeconds: 5`).
-
-**Шаг 4. Service** — `k8s/app-service.yaml`: `type: NodePort`, `port: 8080`, `targetPort: 8080`,
-`nodePort: 30080`, селектор совпадает с метками пода.
-
-**Шаг 5. Применить и проверить:**
+### 2.2 Манифесты — папка `k8s/day06/` (20 мин)
 
 ```bash
 cd /home/rafael/devops-sprint
-sudo k3s kubectl apply -f k8s/
-sudo k3s kubectl get pods -o wide          # ждём 2/2 Running
-sudo k3s kubectl get svc                   # видим NodePort 8080:30080
-sudo k3s kubectl describe pod -l app=app   # Events: пробы проходят, образа нет ошибок
-curl -s localhost:30080/health             # → {"status": "ok"}  (снаружи кластера)
-curl -s localhost:30080/metrics | head -5
+mkdir -p k8s/day06
 ```
 
-**Шаг 6. Проверка самовосстановления (это в критерии дня):**
+Создать пять файлов (все — с `namespace: lab`):
+
+1. `k8s/day06/namespace.yaml` — `kind: Namespace`, `metadata.name: lab`
+2. `k8s/day06/configmap.yaml` — `app-config`: `APP_ENV=k3s`, `APP_VERSION=0.1.0`, `APP_LOG_LEVEL=info`
+3. `k8s/day06/secret.yaml` — `app-secret` через `stringData: {APP_SECRET: "s3cret"}` (закоммитить как пример, реальный пароль в репозиторий не кладём)
+4. `k8s/day06/deployment.yaml` — `app`, 2 реплики, `image: app:0.1.0`, `imagePullPolicy: Never` (образ локальный, в реестре его нет), `containerPort: 8080`, `envFrom` на ConfigMap и Secret, requests/limits (`50m/64Mi` … `200m/256Mi`), обе пробы `httpGet /health` (readiness: `initialDelaySeconds: 3`, `periodSeconds: 5`; liveness: `initialDelaySeconds: 10`, `periodSeconds: 10`)
+5. `k8s/day06/service.yaml` — `app-service`, `type: NodePort`, `port: 8080`, `targetPort: 8080`, `nodePort: 30080`
+
+Опция «сделать по-взрослому»: шестым файлом `k8s/day06/ingress.yaml` — `Ingress` на хост `app.local` → `app-service:8080` (в k3s обслуживает Traefik на 443; тогда проверка через `curl -k -H 'Host: app.local' https://localhost/health`).
+
+### 2.3 Применить и проверить (15 мин)
 
 ```bash
-sudo k3s kubectl delete pod -l app=app
-sudo k3s kubectl get pods -w               # видим Terminating → новый ContainerCreating → Running, Ctrl+C
-curl -s localhost:30080/health             # сервис отвечает, пока под пересоздаётся
+cd /home/rafael/devops-sprint
+sudo k3s kubectl apply -f k8s/day06/
+sudo k3s kubectl -n lab get pods -o wide           # ждём 2/2 Running
+sudo k3s kubectl -n lab get svc                    # app-service NodePort 8080:30080
+sudo k3s kubectl -n lab describe pod -l app=app    # Events: пробы проходят, образ не тянется (Never)
+curl -s localhost:30080/health                     # {"status":"ok"} — снаружи кластера
+curl -s localhost:30080/metrics | head -5
+curl -s localhost:30080/                           # версия/окружение из ConfigMap
+sudo k3s kubectl -n lab logs -l app=app            # пусто/минимум — норма
 ```
 
-## 2.3 Что записать в конспект (30 мин)
+Диагностика, если не поднялось:
+- `ImagePullBackOff` → образа нет в containerd (шаг 1.3) или не стоит `imagePullPolicy: Never`
+- `CrashLoopBackOff` → смотри `kubectl -n lab logs -l app=app`
+- под `Running`, но curl молчит → порт/селектор Service не совпадают с метками пода, либо слушается `127.0.0.1`
 
-`devops-notes.md` или `interview-notes.md`: разница liveness/readiness своими словами, что делает
-`kubectl delete pod` при `replicas: 2` (Deployment добивает до нужного числа), зачем `envFrom` вместо
-переменных в образе. Ответ на вопрос дня — в `interview-notes.md`.
+### 2.4 Самовосстановление — это в критерии дня (5 мин)
+
+```bash
+sudo k3s kubectl -n lab get pods -o wide                  # снимок «до»
+sudo k3s kubectl -n lab delete pod -l app=app
+sudo k3s kubectl -n lab get pods -w                       # Terminating → ContainerCreating → Running, Ctrl+C
+curl -s localhost:30080/health                            # сервис отвечает и во время пересоздания
+```
+
+### 2.5 Конспект (30 мин)
+
+- `interview-notes.md`: ответ на вопрос дня — **зачем liveness и readiness по отдельности и что будет при неверной пробе**. Своими словами, с двумя сценариями: слишком строгая liveness → бесконечные рестарты и застрявший rollout; неверная readiness → под жив, но выведен из балансировки, клиент получает 503.
+- `devops-notes.md`: что делает `kubectl delete pod` при `replicas: 2`; зачем `envFrom` вместо переменных в образе; почему Secret в base64 — не защита.
 
 ---
-# ЧАСТЬ 3. РАСШИРЕНИЕ (60 мин, добровольно)
 
-То же, но по-взрослому: `labs/day06.md` — манифесты в репозитории + вывод `kubectl get pods` **до и после**
-`kubectl delete pod`, плюс `kubectl describe` с пробами. Бонус (+15 мин): поставить заведомо неверную
-readiness-пробу (например, `path: /healthz`) и объяснить по `describe`/`get endpoints`, что сделал кластер.
+## ЧАСТЬ 3. РАСШИРЕНИЕ (60 мин, добровольно) — `labs/day06.md`
+
+Файл `labs/day06.md` в репозитории: ссылка на манифесты + выводы команд:
+
+- `kubectl -n lab get pods -o wide` **до** и **после** `delete pod`
+- `kubectl -n lab describe pod` — блок проб (Liveness/Readiness)
+- `kubectl -n lab get endpoints app-service` — что происходит с эндпоинтами
+- вывод `curl -s localhost:30080/health` и `/metrics`
+
+Проверка блока: `python3 today.py extra`
+Бонус (+15 мин): поставить заведомо неверную readiness-пробу (`path: /healthz`) и объяснить по `describe`/`get endpoints`, что сделал кластер.
 
 ---
-# ЧАСТЬ 4. ФИНАЛ
+
+## ЧАСТЬ 4. ФИНАЛ — коммит и зачёт
 
 ```bash
 cd /home/rafael/devops-sprint
 git add -A
-git commit -m "день 6: /health и /metrics на stdlib, ConfigMap+Secret+пробы в k3s, NodePort"
+git status --short
+git commit -m "день 6: /health и /metrics на stdlib, ConfigMap+Secret+пробы, NodePort в k3s"
 git push
-python3 today.py check     # или дождаться 22:30 — зачёт по коммиту за сегодня
+gh run list --limit 1        # CI должен быть success
+python3 today.py check       # если коммит за сегодня есть — день закрывается (авто-зачёт в 22:30)
 ```
 
-**ГОТОВО, ЕСЛИ:** коммит за сегодня; манифесты `ConfigMap`/`Secret`/`Ingress` (или `Service`); `/health` и
-`/metrics` отвечают снаружи кластера.
+**ГОТОВО, ЕСЛИ:** есть коммит за сегодня; в репозитории манифесты ConfigMap/Secret (+Service/NodePort); `/health` и `/metrics` отвечают снаружи кластера (порт 30080).
 
-**Если что-то не поднимается:** посмотреть `kubectl describe pod` (Events), затем `kubectl logs`.
-Классика: `ImagePullBackOff` — образа нет в containerd (шаг 1); `CrashLoopBackOff` — падает приложение
-(sudo k3s kubectl logs); под `Running`, но curl молчит — проба/порт/селектор Service не совпадают.
+**🧱 Летит день (инциденты):** минимум — 15 минут и один коммит, написать «мини» (`python3 today.py mini`). Полный перенос дня — `python3 today.py shift` (день не сгорает, серия сохраняется).
 
-**🧱 Летит день?** Минимум 15 минут и один коммит — напиши «мини», серия сохранится.
+**ЗАПРЕТЫ (повтор):** не занимать порты 80, 443, 8090; в поде слушать `0.0.0.0`; секреты не коммитить в открытом виде; правила nginx-фаервола по 22-му порту не трогать.

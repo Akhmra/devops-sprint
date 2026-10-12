@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: lab
+data:
+  APP_ENV: "k3s"
+  APP_VERSION: "0.1.0"
+  APP_LOG_LEVEL: "info"
