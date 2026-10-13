@@ -45,3 +45,12 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 10
             failureThreshold: 1
+          # Добавлено: монтирование PVC внутрь контейнера
+          volumeMounts:
+            - name: app-data
+              mountPath: /data
+      # Добавлено: определение тома, ссылающегося на PVC
+      volumes:
+        - name: app-data
+          persistentVolumeClaim:
+            claimName: app-data

@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: crash-demo
+  name: crash-demo
+  namespace: lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: crash-demo
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: crash-demo
+    spec:
+      containers:
+      - image: app:0.1.0
+        name: app
+        resources: {}
+status: {}

@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: oom-demo, namespace: lab}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: oom-demo}}
+  template:
+    metadata: {labels: {app: oom-demo}}
+    spec:
+      containers:
+        - name: mem
+          image: app:0.1.0
+          imagePullPolicy: Never
+          command: ["python", "-c", "a=[]\nwhile True: a.append(bytearray(10_000_000))"]
+          resources:
+            limits: {memory: 32Mi}
+            requests: {memory: 16Mi}

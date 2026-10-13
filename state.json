@@ -1,8 +1,8 @@
 {
- "current_day": 6,
- "streak": 25,
- "best_streak": 25,
- "last_credited": "2026-10-11",
+ "current_day": 7,
+ "streak": 26,
+ "best_streak": 26,
+ "last_credited": "2026-10-12",
  "history": [
   {
    "date": "2026-10-02",
@@ -43,6 +43,11 @@
    "date": "2026-10-11",
    "day": 6,
    "status": "shift"
+  },
+  {
+   "date": "2026-10-12",
+   "day": 6,
+   "status": "done"
   }
  ],
  "mini_count": 3,
@@ -51,7 +56,8 @@
  "extra_done": [
   "2026-10-05",
   "2026-10-06",
-  "2026-10-09"
+  "2026-10-09",
+  "2026-10-12"
  ],
  "shifts": [
   "2026-10-10",

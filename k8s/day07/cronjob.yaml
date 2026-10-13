@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: health-cron
+  namespace: lab
+spec:
+  schedule: "*/5 * * * *"
+  timeZone: Europe/Moscow
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: default
+          restartPolicy: OnFailure
+          containers:
+            - name: health-check
+              image: curlimages/curl:latest
+              imagePullPolicy: Never
+              command: ["sh", "-c", "date -u; curl -s -m 3 http://app-service.lab.svc.cluster.local:8080/health; echo"]

@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: bad-image
+  name: bad-image
+  namespace: lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bad-image
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: bad-image
+    spec:
+      containers:
+      - image: nope:0.0.1
+        name: nope
+        resources: {}
+status: {}

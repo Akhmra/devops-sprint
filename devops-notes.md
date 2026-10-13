@@ -125,3 +125,22 @@ docker run -d -p 5000:5000 registry:2
 
 Почему base64 в Secret — не защита
 Base64 — это лишь способ кодирования текста для хранения в YAML/JSON, а не шифрование. Любой может декодировать строку обратно в исходный текст. Для защиты секретов используют шифрование на уровне etcd или внешние хранилища (Vault, Sealed Secrets).
+
+
+**Pending до потребителя, StatefulSet vs Deployment, Forbid, таблица «статус → причина → что смотреть»*
+
+Pending: Под не получит трафик, пока не перейдет в Running и не пройдет Readiness Probe.
+
+StatefulSet vs Deployment:
+
+Deployment: для stateless-сервисов (API, фронтенд). Поды взаимозаменяемы, IP меняются, данные могут теряться.
+StatefulSet: для stateful-сервисов (БД, очереди). Стабильные имена (db-0), уникальный диск (PVC) для каждого пода, строгий порядок запуска.
+
+Forbid: Блокировка создания подов из-за превышения ResourceQuota (лимиты CPU/памяти в неймспейсе) или нарушения LimitRange. Проверять нужно kubectl describe deploy и kubectl get resourcequota.
+
+Шпаргалка «Статус → Причина → Что смотреть»:
+
+Pending + 0/5 nodes — нехватка ресурсов или taints → kubectl describe pod (Events), kubectl describe node.
+Pending + PVC — том не привязался → kubectl describe pvc.
+CrashLoopBackOff — приложение падает → kubectl logs <pod> --previous.
+OOMKilled — мало памяти → kubectl describe pod (State), увеличить limits.memory.*
