@@ -1,23 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  labels:
-    app: crash-demo
   name: crash-demo
   namespace: lab
 spec:
   replicas: 1
-  selector:
-    matchLabels:
-      app: crash-demo
-  strategy: {}
+  selector: {matchLabels: {app: crash-demo}}
   template:
-    metadata:
-      labels:
-        app: crash-demo
+    metadata: {labels: {app: crash-demo}}
     spec:
       containers:
-      - image: app:0.1.0
-        name: app
-        resources: {}
-status: {}
+        - name: app
+          image: app:0.1.0
+          imagePullPolicy: Never
+          command: ["python", "-c", "import sys;print('стартую и падаю', flush=True);sys.exit(1)"]
