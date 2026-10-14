@@ -1,7 +1,7 @@
 {
  "title": "DevOps-спринт: подготовка к стажировке (ускоренный курс)",
  "start_date": "2026-10-03",
- "end_date": "2026-10-22",
+ "end_date": "2026-10-23",
  "minutes_total": 210,
  "minutes_split": {
   "python": 60,
@@ -24,7 +24,7 @@
    "infra": {
     "topic": "Кто такой DevOps/SRE в облачном провайдере: зоны ответственности, CI/CD, IaC, мониторинг, on-call",
     "source": "https://ru.wikipedia.org/wiki/DevOps",
-    "task": "Репозиторий ~/devops-sprint: git init, .gitignore, README с целью спринта и дедлайном 21.10, затем GitHub (gh auth login → gh repo create devops-sprint → push) и первый workflow-заготовка; в devops-notes.md — карта компетенций стажировки: 10 пунктов, у каждого свой уровень 0–3 и чем закрываю"
+    "task": "Репозиторий ~/devops-sprint: git init, .gitignore, README с целью спринта и дедлайном 23.10, затем GitHub (gh auth login → gh repo create devops-sprint → push) и первый workflow-заготовка; в devops-notes.md — карта компетенций стажировки: 10 пунктов, у каждого свой уровень 0–3 и чем закрываю"
    },
    "question": "Чем DevOps отличается от SRE и от системного администратора? Где в облаке проходит граница ответственности провайдера и клиента?",
    "done_criteria": "коммит за сегодня: README.md + tools/devcheck.py, который запускается и печатает показатели этой ВМ"
