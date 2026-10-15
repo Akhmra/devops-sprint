@@ -2,7 +2,7 @@
  "current_day": 8,
  "streak": 27,
  "best_streak": 27,
- "last_credited": "2026-10-14",
+ "last_credited": "2026-10-15",
  "history": [
   {
    "date": "2026-10-02",
@@ -58,6 +58,11 @@
    "date": "2026-10-14",
    "day": 8,
    "status": "shift"
+  },
+  {
+   "date": "2026-10-15",
+   "day": 8,
+   "status": "shift"
   }
  ],
  "mini_count": 3,
@@ -72,6 +77,7 @@
  "shifts": [
   "2026-10-10",
   "2026-10-11",
-  "2026-10-14"
+  "2026-10-14",
+  "2026-10-15"
  ]
 }
